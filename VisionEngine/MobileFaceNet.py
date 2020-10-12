@@ -1,5 +1,5 @@
 from cv2.dnn import readNetFromCaffe, blobFromImage
-from Constants import *
+from Constants import FACE_EMBEDDING_DEFINITION, FACE_EMBEDDING_WEIGHTS
 from cv2 import resize
 
 INPUT_SIZE = (112, 112)

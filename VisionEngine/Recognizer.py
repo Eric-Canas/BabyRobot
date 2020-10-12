@@ -1,8 +1,9 @@
-import pickle
+from pickle import load, dump
 import numpy as np
 import os
 from Constants import FACE_RECOGNIZER_FILE, FACE_RECOGNIZER_DIR,\
                         DECIMALS, KNOWN_NAMES
+
 from sklearn.model_selection import train_test_split
 from sklearn.decomposition import PCA
 from sklearn.metrics import confusion_matrix
@@ -11,10 +12,9 @@ from VisionEngine.Dataset import Dataset
 from sklearn.pipeline import Pipeline
 from matplotlib import pyplot as plt
 
-import random
-import skimage as sk
-from skimage import transform
-from skimage import util
+from random import uniform
+from skimage.util import random_noise
+from skimage.transform import rotate
 
 ROTATION_PROBABILITY = 0.33
 NOISE_PROBABILITY = 0.8
@@ -26,7 +26,7 @@ class Recognizer:
         self.embedding = embedding
         self.binary_recognition = binary_recognition
         if os.path.exists(recognizer_path):
-            self.recognizer = pickle.load(open(recognizer_path, 'rb'))
+            self.recognizer = load(open(recognizer_path, 'rb'))
         else:
             print("Training SVC...")
             self.recognizer = train_recognizer(dataset=Dataset().faces_dataset, embedder=self.embedding,
@@ -68,7 +68,7 @@ def train_recognizer(dataset, embedder, components_reduction=128, save_at=FACE_R
         os.makedirs(save_at)
     else:
         [os.remove(os.path.join(save_at,file)) for file in os.listdir(save_at)]
-    pickle.dump(pipe, open(os.path.join(save_at, file_name), 'wb'))
+    dump(pipe, open(os.path.join(save_at, file_name), 'wb'))
     save_confusion_matrix(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val,
                           pipeline=pipe, save_at=save_at, binary_recognition=binary_recognition)
     return pipe
@@ -110,15 +110,15 @@ def get_train_val_splits(dataset, embedder, val_split=0.1, binary_recognition = 
 
 def data_augmentate(image, rotation_probability=ROTATION_PROBABILITY, noise_probability=NOISE_PROBABILITY,
                     horizontal_flip_probability = HORIZONTAL_FLIP_PROBABILITY):
-    if random.uniform(0,1) <= rotation_probability:
+    if uniform(0,1) <= rotation_probability:
         image = random_rotation(image)
-    if random.uniform(0,1) <= noise_probability:
-        image = sk.util.random_noise(image)
-    if random.uniform(0,1) <= horizontal_flip_probability:
+    if uniform(0,1) <= noise_probability:
+        image = random_noise(image)
+    if uniform(0,1) <= horizontal_flip_probability:
         image = image[:, ::-1]
     return image.astype(np.uint8)
 
 def random_rotation(image):
     # pick a random degree of rotation between 25% on the left and 25% on the right
-    random_degree = random.uniform(-60, 60)
-    return sk.transform.rotate(image, random_degree)
+    random_degree = uniform(-60, 60)
+    return rotate(image, random_degree)

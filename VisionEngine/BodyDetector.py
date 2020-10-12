@@ -1,7 +1,8 @@
 from cv2.dnn import blobFromImage, readNetFromCaffe
 from Constants import *
-import cv2
+from cv2 import resize
 import numpy as np
+
 LABEL = 1
 PERSON = 15
 CONFIDENCE = 2
@@ -9,6 +10,7 @@ X2, Y2 = -2, -1
 MEAN = (123.68, 116.78, 103.94)
 INVERSE_STD = 0.017
 INPUT_SIZE = (304, 304)
+
 class BodyDetector:
     def __init__(self):
         self.network = readNetFromCaffe(prototxt=BODY_DETECTION_DEFINITION, caffeModel=BODY_DETECTION_WEIGHTS)
@@ -16,7 +18,7 @@ class BodyDetector:
 
     def predict(self, input):
         h, w = input.shape[:2]
-        blob = blobFromImage(cv2.resize(input, self.input_size), scalefactor=INVERSE_STD,
+        blob = blobFromImage(resize(input, self.input_size), scalefactor=INVERSE_STD,
                              size=self.input_size,
                              mean=MEAN, swapRB=False)
         self.network.setInput(blob)

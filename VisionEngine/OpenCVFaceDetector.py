@@ -1,12 +1,11 @@
 from cv2.dnn import blobFromImage, readNetFromCaffe
-import os
 from Constants import FACE_DETECTOR_DIR, MIN_CONFIDENCE
-import imutils
-import cv2
+from os.path import join
+from cv2 import resize
 import numpy as np
 
-FACE_DETECTOR_DEFINITION = os.path.join(FACE_DETECTOR_DIR, 'deploy.prototxt')
-FACE_DETECTOR_WEIGHTS = os.path.join(FACE_DETECTOR_DIR, 'weights.caffemodel')
+FACE_DETECTOR_DEFINITION = join(FACE_DETECTOR_DIR, 'deploy.prototxt')
+FACE_DETECTOR_WEIGHTS = join(FACE_DETECTOR_DIR, 'weights.caffemodel')
 INPUT_SIZE = (300,300)
 TRAINING_MEAN = (104.0, 177.0, 123.0)
 
@@ -15,14 +14,14 @@ CONFIDENCE = 2
 X2, Y2 = -2, -1
 
 
-class DetectorModel:
+class OpenCVFaceDetector:
     def __init__(self):
         self.network = readNetFromCaffe(prototxt=FACE_DETECTOR_DEFINITION, caffeModel=FACE_DETECTOR_WEIGHTS)
         self.input_size = INPUT_SIZE
 
     def predict(self, input):
         h, w = input.shape[:2]
-        blob = blobFromImage(cv2.resize(input, self.input_size), scalefactor=1.0,
+        blob = blobFromImage(resize(input, self.input_size), scalefactor=1.0,
                              size=self.input_size,
                              mean=TRAINING_MEAN, swapRB=True)
         self.network.setInput(blob)

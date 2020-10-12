@@ -1,8 +1,9 @@
-from Constants import *
-import cv2
-import imutils
+from Constants import CHARGED_WIDTH, FULL_PHOTOS_DATA_DIR, CROPPED_FACES_DATA_DIR
+from cv2 import imwrite, imread
+from imutils import resize
 from VisionEngine.Detector import Detector
-from VisionEngine.DetectorModel import DetectorModel
+from VisionEngine.OpenCVFaceDetector import OpenCVFaceDetector
+import os
 
 class Dataset:
     def __init__(self, searched_width=CHARGED_WIDTH, full_images_data_dir=FULL_PHOTOS_DATA_DIR,
@@ -15,7 +16,7 @@ class Dataset:
         if not os.path.exists(self.cropped_faces_data_dir) or \
                 os.listdir(self.data_dir) != os.listdir(self.cropped_faces_data_dir):
             self.dataset = self.get_all_images(images_dir=self.data_dir, width=searched_width)
-            self.generate_cropped_dataset(detector=Detector(DetectorModel()))
+            self.generate_cropped_dataset(detector=Detector(OpenCVFaceDetector()))
         elif charge_full_dataset:
             self.dataset = self.get_all_images(images_dir=self.data_dir, width=searched_width)
 
@@ -30,9 +31,7 @@ class Dataset:
             person_dir = os.path.join(images_dir, person)
             images = []
             for image_name in os.listdir(person_dir):
-                image = cv2.imread(os.path.join(person_dir, image_name))
-                if width is not None or height is not None:
-                    image = imutils.resize(image, width=width, height=height)
+                image = read_image(height=height, width=width, person_dir=person_dir, image_name=image_name)
                 images.append(image)
             data[person] = images
         return data
@@ -44,8 +43,14 @@ class Dataset:
                 os.makedirs(path)
             for image in images:
                 image_path = os.path.join(path, str(len(os.listdir(path)))+'.jpg')
-                faces = detector.get_content(image=image)
+                faces = detector.crop_boxes_content(image=image)
                 if len(faces)==1:
-                    cv2.imwrite(image_path, faces[0])
+                    imwrite(image_path, faces[0])
                 else:
                     print("Problem in image {path}. {faces} faces detected".format(path=image_path, faces=len(faces)))
+
+def read_image(height, width, person_dir, image_name):
+    image = imread(os.path.join(person_dir, image_name))
+    if width is not None or height is not None:
+        image = resize(image, width=width, height=height)
+    return image

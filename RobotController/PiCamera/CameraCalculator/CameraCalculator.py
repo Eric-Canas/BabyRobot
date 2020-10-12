@@ -1,5 +1,6 @@
-from PiCamera.CameraCalculator.CanonEOS4000DParameters import *
 
+from RobotController.PiCamera.CameraCalculator.PiCameraV2Parameters import *
+from math import atan, cos, radians
 W = 1
 H = 0
 
@@ -11,8 +12,8 @@ class CameraCalculator:
 		self.sensor_dimensions_in_cm = (Sensor_dim_in_px[0] * (pixel_size_in_um / 10000), Sensor_dim_in_px[1] * (pixel_size_in_um / 10000))
 		self.focal_in_cm = focal_in_mm / 10
 		self.element_height_in_cm = element_heigth_in_cm
-		self.sensor_aperture_in_degrees = 2 * math.atan(self.sensor_dimensions_in_cm[0] / (2 * self.focal_in_cm))
-		self.cos_of_half_aperture = math.cos(math.radians(self.sensor_aperture_in_degrees / 2.0))
+		self.sensor_aperture_in_degrees = 2 * atan(self.sensor_dimensions_in_cm[0] / (2 * self.focal_in_cm))
+		self.cos_of_half_aperture = cos(radians(self.sensor_aperture_in_degrees / 2.0))
 
 	def rectangleToRealWorldXY(self,rectangle, h, w):
 		y = self.getDistance(rectangle=rectangle, h=h)

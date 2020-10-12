@@ -3,7 +3,7 @@ import os
 FULL_PHOTOS_DATA_DIR = os.path.join('Dataset', 'CompletePhotos')
 CROPPED_FACES_DATA_DIR = os.path.join('Dataset', 'Faces')
 NEW_PROPOSALS_DATA_DIR = os.path.join('Dataset', 'NewProposals')
-KNOWN_NAMES = os.listdir(FULL_PHOTOS_DATA_DIR)
+KNOWN_NAMES = os.listdir(CROPPED_FACES_DATA_DIR)
 
 FACE_DETECTOR_DIR = os.path.join('Models', 'FaceDetector')
 FACE_EMBEDDING_DIR = os.path.join('Models', 'FaceEmbedding')
@@ -22,8 +22,6 @@ FACE_EMBEDDING_WEIGHTS = os.path.join(FACE_EMBEDDING_DIR, 'MobileFaceNet.caffemo
 BODY_DETECTION_DEFINITION = os.path.join(BODY_DETECTOR_DIR, 'Pelee.prototxt')
 BODY_DETECTION_WEIGHTS = os.path.join(BODY_DETECTOR_DIR, 'Pelee.caffemodel')
 
-
-
 NEURAL_NET_INPUT_SIZE = (300,300)
 NEURAL_NET_INPUT_WIDTH = 400
 
@@ -37,3 +35,4 @@ CHARGED_WIDTH = 512
 
 FACE_HEIGHT = 18
 FACE_WIDTH = 15
+

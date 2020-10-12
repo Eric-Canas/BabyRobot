@@ -1,4 +1,4 @@
-import cv2
+from cv2 import cvtColor, COLOR_BGR2RGB
 
 
 class Detector:
@@ -6,13 +6,13 @@ class Detector:
         self.model = model
         self.camera_calculator = ()
 
-    def get_boxes(self, image):
+    def predict(self, image):
         return self.model.predict(image)
 
-    def get_content(self, image, boxes=None, as_rgb=False):
+    def crop_boxes_content(self, image, boxes=None, as_rgb=False):
         if boxes is None:
-            boxes = self.get_boxes(image=image)
+            boxes = self.predict(image=image)
         faces = [image[y1:y2, x1:x2] for confidence, (x1, y1, x2, y2) in boxes]
         if as_rgb:
-            faces = [cv2.cvtColor(face, code=cv2.COLOR_BGR2RGB) for face in faces]
+            faces = [cvtColor(face, code=COLOR_BGR2RGB) for face in faces]
         return faces
