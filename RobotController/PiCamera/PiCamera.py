@@ -1,7 +1,7 @@
 from Constants import NEW_PROPOSALS_DATA_DIR
-from RobotController.PiCamera.CameraCalculator.PiCameraV2Parameters import SENSOR_DIM_IN_PIXELS, FRAME_RATE
-from cv2 import waitKey, imwrite
+from RobotController.PiCamera.CameraCalculator.PiCameraV2Parameters import PREFERRED_RESOLUTION, FRAME_RATE
 
+import cv2
 import os
 from random import randint
 from warnings import warn
@@ -12,13 +12,13 @@ try:
 
     class PiCamera(SuperPiCamera):
         class __PiCamera(SuperPiCamera):
-            def __init__(self, resolution=SENSOR_DIM_IN_PIXELS, framerate_range=(FRAME_RATE, FRAME_RATE // 3)):
+            def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE, FRAME_RATE // 3)):
                 super().__init__(resolution=resolution, framerate_range=framerate_range)
                 self.raw_capture = PiRGBArray(self, size=self.resolution)
 
         instance = None
 
-        def __init__(self, resolution=SENSOR_DIM_IN_PIXELS, framerate_range=(FRAME_RATE, FRAME_RATE // 3)):
+        def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE, FRAME_RATE // 3)):
             if PiCamera.instance is None:
                 PiCamera.instance = PiCamera.__PiCamera(resolution=resolution, framerate_range=framerate_range)
             else:
@@ -31,28 +31,28 @@ try:
             return setattr(self.instance, key, value)
 
         def capture_continuous(self):
-            self.rawCapture.truncate(0)
-            for image in super().capture_continuous(self.rawCapture, format="rgb", use_video_port=True):
-                if waitKey(1) & 0xFF == ord("q"):
+            self.raw_capture.truncate(0)
+            for image in super().capture_continuous(self.raw_capture, format="rgb", use_video_port=True):
+                if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
-                self.rawCapture.truncate(0)
+                self.raw_capture.truncate(0)
                 yield image.array
 
         def capture(self):
-            self.rawCapture.truncate(0)
-            return super().capture(self.rawCapture, 'rgb')
+            self.raw_capture.truncate(0)
+            return super().capture(self.raw_capture, 'rgb')
 except:
     warn("picamera module not found. PiCamera will be a Mock Object")
     from VisionEngine.Dataset import read_image
     from Constants import FULL_PHOTOS_DATA_DIR
     from random import choice
     class PiCamera():
-        def __init__(self, resolution = SENSOR_DIM_IN_PIXELS, framerate_range = (FRAME_RATE, FRAME_RATE//3)):
+        def __init__(self, resolution = PREFERRED_RESOLUTION, framerate_range = (FRAME_RATE, FRAME_RATE//3)):
             self.resolution = resolution
             self.framerate_range = framerate_range
         def capture_continuous(self):
             while True:
-                if waitKey(1) & 0xFF == ord("q"):
+                if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
                 yield self.capture()
 
@@ -69,7 +69,8 @@ def capture_dataset(pipeline, save_at=NEW_PROPOSALS_DATA_DIR, persons = ("Albaby
             faces = pipeline.get_faces_in_image(image=image)
             for name in persons:
                 if name in faces:
-                    imwrite(os.path.join(save_at, name, name+str(randint(0, 10000))+'.jpg'), faces[name])
+					image = cv2.cvtColor(faces[name], code=cv2.COLOR_BGR2RGB)
+                    cv2.imwrite(os.path.join(save_at, name, name+str(randint(0, 10000))+'.jpg'), image)
 
 
 
