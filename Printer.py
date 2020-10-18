@@ -1,7 +1,9 @@
 from Constants import *
+import matplotlib as mtb
+mtb.use('GTK3Cairo')
 import cv2
 
-def show_detections(image, boxes, names, distances, confidences, swap_to_RGB=True):
+def show_detections(image, boxes, names, distances, confidences, swap_to_RGB=False):
     for (x1, y1, x2, y2), name, (dist_x, dist_y), confidence in zip(boxes, names, distances, confidences):
         # Print confidence
         cv2.rectangle(image, (x1, y1), (x2, y2), color=BGR_BLUE, thickness=RECTANGLES_THICKNESS)
@@ -27,7 +29,11 @@ def show_detections(image, boxes, names, distances, confidences, swap_to_RGB=Tru
                     color=BGR_BLUE, thickness=LETTERS_SIZE)
     if swap_to_RGB:
         image = cv2.cvtColor(image, code=cv2.COLOR_BGR2RGB)
-    cv2.imshow("Detector",image)
-    cv2.waitKey(20)
+    #cv2.imshow("Detector",image)
+    #cv2.waitKey(20)
+	mtb.pyplot.figure(1)
+	mtb.pyplot.clf()
+	mtb.pyplot.imshow(image)
+	mtb.pyplot.pause(.001)
     return image
 
