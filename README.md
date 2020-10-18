@@ -1,2 +1,5 @@
 # BabyRobot
-BabyRobot project
+
+For connecting: 
+
+ssh -X pi@raspberrypi
