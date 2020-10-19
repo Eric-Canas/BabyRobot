@@ -1,5 +1,5 @@
 from Constants import CHARGED_WIDTH, FULL_PHOTOS_DATA_DIR, CROPPED_FACES_DATA_DIR
-from cv2 import imwrite, imread
+from cv2 import imwrite, imread, cvtColor, COLOR_RGB2BGR
 from imutils import resize
 from VisionEngine.Detector import Detector
 from VisionEngine.OpenCVFaceDetector import OpenCVFaceDetector
@@ -28,11 +28,16 @@ class Dataset:
         for person in os.listdir(images_dir):
             if self.verbose:
                 print("Processing {name}".format(name=person))
-            person_dir = os.path.join(images_dir, person)
             images = []
-            for image_name in os.listdir(person_dir):
-                image = read_image(height=height, width=width, person_dir=person_dir, image_name=image_name)
-                images.append(image)
+            sub_dirs = [os.path.join(images_dir, person)]
+            while(len(sub_dirs) > 0):
+                person_dir = sub_dirs.pop(0)
+                for image_name in os.listdir(person_dir):
+                    if os.path.isfile(os.path.join(person_dir, image_name)):
+                        image = read_image(height=height, width=width, person_dir=person_dir, image_name=image_name)
+                        images.append(image)
+                    else:
+                        sub_dirs.append(image_name)
             data[person] = images
         return data
 
@@ -50,6 +55,7 @@ class Dataset:
                     print("Problem in image {path}. {faces} faces detected".format(path=image_path, faces=len(faces)))
 
 def read_image(height, width, person_dir, image_name):
+    # It gets the image with channels swapped to BGR
     image = imread(os.path.join(person_dir, image_name))
     if width is not None or height is not None:
         image = resize(image, width=width, height=height)

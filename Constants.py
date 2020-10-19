@@ -1,9 +1,12 @@
 import os
-
+from numpy import sort
 FULL_PHOTOS_DATA_DIR = os.path.join('Dataset', 'CompletePhotos')
 CROPPED_FACES_DATA_DIR = os.path.join('Dataset', 'Faces')
-NEW_PROPOSALS_DATA_DIR = os.path.join('Dataset', 'NewProposals')
-KNOWN_NAMES = os.listdir(CROPPED_FACES_DATA_DIR)
+NEW_PROPOSALS_DATA_DIR = 'CapturedFromPiCamera'
+
+KNOWN_NAMES = sort(os.listdir(CROPPED_FACES_DATA_DIR))
+
+DEFAULT_PERSON_TO_FOLLOW = 'Eric'
 
 FACE_DETECTOR_DIR = os.path.join('Models', 'FaceDetector')
 FACE_EMBEDDING_DIR = os.path.join('Models', 'FaceEmbedding')
@@ -33,6 +36,5 @@ RECTANGLES_THICKNESS = 3
 LETTERS_SIZE = 2
 CHARGED_WIDTH = 512
 
-FACE_HEIGHT = 18
+FACE_HEIGHT = 17
 FACE_WIDTH = 15
-

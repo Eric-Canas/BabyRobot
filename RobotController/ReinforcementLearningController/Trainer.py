@@ -10,9 +10,11 @@ from RobotController.ReinforcementLearningController.RLConstants import *
 from warnings import warn
 from os.path import join, isfile, isdir
 from os import makedirs
-
+from Constants import DECIMALS
+from RobotController.ReinforcementLearningController.RLConstants import PLAY_SESSION_TIME_IN_SECONDS
 import numpy as np
 from matplotlib import pyplot as plt
+from time import time
 
 PLOT_EVERY = 100
 
@@ -24,7 +26,7 @@ class Trainer:
     def __init__(self, input_size = len(STATES_ORDER), action_size=len(ACTIONS_DEFINITION), gamma=GAMMA, buffer_size=DQN_REPLAY_BUFFER_CAPACITY,
                  batch_size=DQN_BATCH_SIZE, loss = smooth_l1_loss, env = None, clip_weights = True,
                  episodes_between_saving=EPISODES_BETWEEN_SAVING, charge_data_from = RL_CONTROLLER_DIR, save_data_at = RL_CONTROLLER_DIR,
-                 model_dir = RL_CONTROLLER_PTH_FILE):
+                 model_dir = RL_CONTROLLER_PTH_FILE, session_time = PLAY_SESSION_TIME_IN_SECONDS):
         """
         Include the double Q network and is in charge of train and manage it
         :param input_size:
@@ -61,6 +63,7 @@ class Trainer:
             self.losses, self.all_rewards = [], []
         else:
             self.losses, self.all_rewards = self.charge_previous_losses_and_rewards(charge_from=self.charge_data_from)
+        self.session_time = session_time
 
     def get_action(self, state, epsilon = 0.):
         return self.current_model.act(state, epsilon=epsilon)
@@ -140,17 +143,19 @@ class Trainer:
         episodes_between_saving = self.episodes_between_saving if episodes_between_saving is None else episodes_between_saving
         # Save the losses of the network and the rewards of each episode
 
-
         state, reward = self.env.step(IDLE)
+        if verbose:
+            print("Performing random movements for filling the batch")
         for i in range(self.batch_size):
-
             action = self.current_model.act(state, epsilon=1.)
             next_state, reward = self.env.step(action)
 
             self.replay_buffer.push(state, action, reward, next_state)
             state = next_state
 
-
+        if verbose:
+            print("Starting the train!")
+        start_time = time()
         for episode in range(1, train_episodes+1):
             episode_reward = 0
             actions_taken = []
@@ -183,14 +188,26 @@ class Trainer:
             self.losses.append(np.mean(episode_losses))
             # If a game is finished save the results of that game and restart the game
             if verbose:
-                print("Episode Reward: " + str(episode_reward) +".  "
-                    "Std of actions: " + str(np.round(np.std(actions_taken), decimals=4)) +". " 
-                    "Epsilon " + str(np.round(current_epsilon, decimals=3)))
+                print("Episode Reward: {epReward}\n"
+                      "Std of actions: {std}\n"
+                      "Epsilon: {epsilon}\n"
+                      "Remaining Time: {time} s".format(epReward=round(episode_reward, ndigits=DECIMALS),
+                                                      std=round(np.std(actions_taken), ndigits=DECIMALS*2),
+                                                      epsilon = round(current_epsilon, ndigits=DECIMALS),
+                                                      time = round(self.session_time-(time()-start_time), ndigits=DECIMALS)))
 
             if episodes_between_saving is not None and (episode % episodes_between_saving) == 0:
-                self.current_model.save()
-                self.save_losses_and_rewards(charge_from=self.charge_data_from)
-                self.plot_loss_and_rewards(save_at=self.save_data_at)
+                self.save()
+            if self.session_time-(time()-start_time) < 0:
+                self.save()
+                if verbose:
+                    print("Training time finished. Execute again for resuming the train")
+                return None
+
+    def save(self):
+        self.current_model.save()
+        self.save_losses_and_rewards(charge_from=self.charge_data_from)
+        self.plot_loss_and_rewards(save_at=self.save_data_at)
 
     def charge_previous_losses_and_rewards(self, charge_from = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
                                            rewards_file=REWARDS_FILE_NAME):

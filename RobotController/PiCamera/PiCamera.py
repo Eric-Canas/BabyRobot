@@ -1,4 +1,4 @@
-from Constants import NEW_PROPOSALS_DATA_DIR
+from Constants import NEW_PROPOSALS_DATA_DIR, CROPPED_FACES_DATA_DIR
 from RobotController.PiCamera.CameraCalculator.PiCameraV2Parameters import PREFERRED_RESOLUTION, FRAME_RATE
 
 import cv2
@@ -32,7 +32,7 @@ try:
 
         def capture_continuous(self):
             self.raw_capture.truncate(0)
-            for image in super().capture_continuous(self.raw_capture, format="rgb", use_video_port=True):
+            for image in super().capture_continuous(self.raw_capture, format="bgr", use_video_port=True):
                 if cv2.waitKey(1) & 0xFF == ord("q"):
                     break
                 self.raw_capture.truncate(0)
@@ -50,6 +50,10 @@ except:
         def __init__(self, resolution = PREFERRED_RESOLUTION, framerate_range = (FRAME_RATE, FRAME_RATE//3)):
             self.resolution = resolution
             self.framerate_range = framerate_range
+        def __enter__(self):
+            return self
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
         def capture_continuous(self):
             while True:
                 if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -62,15 +66,17 @@ except:
             return image
 
 
-def capture_dataset(pipeline, save_at=NEW_PROPOSALS_DATA_DIR, persons = ("Albaby", "Eric")):
-    [os.makedirs(os.path.join(save_at, person)) for person in persons if not os.path.exists(os.path.join(save_at, person))]
+def capture_dataset(pipeline, faces_dir = CROPPED_FACES_DATA_DIR, save_at=NEW_PROPOSALS_DATA_DIR, persons = ("Albaby", "Eric"), show_it = False):
+    [os.makedirs(os.path.join(faces_dir, person, save_at)) for person in persons if not os.path.exists(os.path.join(faces_dir, person, save_at))]
     with PiCamera() as camera:
         for image in camera.capture_continuous():
-            faces = pipeline.get_faces_in_image(image=image)
+            if show_it:
+                faces = pipeline.show_detections(image=image, return_faces=True)
+            else:
+                faces = pipeline.get_faces_in_image(image=image)
             for name in persons:
                 if name in faces:
-					image = cv2.cvtColor(faces[name], code=cv2.COLOR_BGR2RGB)
-                    cv2.imwrite(os.path.join(save_at, name, name+str(randint(0, 10000))+'.jpg'), image)
+                    cv2.imwrite(os.path.join(faces_dir, name, save_at, name+str(randint(0, 1000))+'.jpg'), faces[name])
 
 
 

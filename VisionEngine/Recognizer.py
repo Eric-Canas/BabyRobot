@@ -10,7 +10,12 @@ from sklearn.metrics import confusion_matrix
 from sklearn.neural_network import MLPClassifier
 from VisionEngine.Dataset import Dataset
 from sklearn.pipeline import Pipeline
-from matplotlib import pyplot as plt
+try:
+    from matplotlib import pyplot as plt
+except:
+    import matplotlib
+    matplotlib.use('Agg')
+    from matplotlib import pyplot as plt
 
 from random import uniform
 from skimage.util import random_noise
@@ -40,23 +45,17 @@ class Recognizer:
 
 def train_recognizer(dataset, embedder, components_reduction=128, save_at=FACE_RECOGNIZER_DIR,
                      file_name=FACE_RECOGNIZER_FILE, binary_recognition=None, verbose=True):
+
     x_train, x_val, y_train, y_val = get_train_val_splits(dataset=dataset, embedder=embedder,
                                                           binary_recognition=binary_recognition)
 
-
-    pipe = Pipeline(steps=[('PCA', PCA(n_components=components_reduction)),
-                           ('MLP', MLPClassifier(hidden_layer_sizes=(256,128), max_iter=10000, validation_fraction=0.01))])
+    # Although the PCA does not any component reduction, it preprocess the features, improving the performance up to a 25%
+    pipe = Pipeline(steps=[('PCA', PCA(n_components=components_reduction))
+                            ,('MLP', MLPClassifier(hidden_layer_sizes=(256,128), max_iter=10000, validation_fraction=0.01))])
                            #('BinaryOutput', FunctionTransformer(np.sign))], verbose=True)
                            #('SVC', OneClassSVM(max_iter=50000))], verbose=True)
-    """
-    #pipe = LinearDiscriminantAnalysis()
-    """
-    """
-    if binary_recognition is None:
-        pipe = MLPClassifier(max_iter=10000)
-    else:
-        pipe = MLPRegressor(max_iter=10000)
-    """
+    #pipe = MLPClassifier(hidden_layer_sizes=(256,128), max_iter=10000, validation_fraction=0.01)
+
     pipe = pipe.fit(X=x_train, y=y_train)
 
     if verbose:
@@ -82,7 +81,6 @@ def save_confusion_matrix(x_train, y_train, x_val, y_val, pipeline,
         y_pred = pipeline.predict(x)
         if binary_recognition:
             y_pred = np.sign(y_pred)
-            acc = np.mean(y == y_pred)
         acc = pipeline.score(X=x, y=y)
         y[y == -1], y_pred[y_pred==-1] = 0, 0
         ids = np.sort(np.unique(y))

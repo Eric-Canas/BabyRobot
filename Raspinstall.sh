@@ -1,3 +1,5 @@
+sudo apt-get install unzip -y
+
 sudo apt-get install libatlas-base-dev -y
 sudo apt install libopenblas-dev libblas-dev m4 cmake cython python3-dev python3-yaml python3-setuptools python3-wheel python3-pillow python3-numpy -y
 sudo apt-get install tightvncserver -y
@@ -20,3 +22,5 @@ sudo apt-get install python3-gi-cairo -y
 
 cd Desktop 
 wget --no-check-certificate --content-disposition https://github.com/Eric-Canas/BabyRobot/archive/main.zip
+unzip BabyRobot-main.zip -d .
+rm ./BabyRobot-main.zip

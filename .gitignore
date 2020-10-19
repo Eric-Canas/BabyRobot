@@ -1,3 +1,4 @@
 .idea/
-Dataset/CompletePhotos/.jpg
-Dataset/CompletePhotos/
+Dataset/CompletePhotos/*/*.jpg
+__pycache__/
+*.pyc

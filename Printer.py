@@ -1,9 +1,13 @@
 from Constants import *
 import matplotlib as mtb
-mtb.use('GTK3Cairo')
+try:
+    mtb.use('GTK3Cairo')
+except:
+    from warnings import warn
+    warn("PyCairo is not in use. If you are not viewing any plot install pycairo")
 import cv2
 
-def show_detections(image, boxes, names, distances, confidences, swap_to_RGB=False):
+def show_detections(image, boxes, names, distances, confidences):
     for (x1, y1, x2, y2), name, (dist_x, dist_y), confidence in zip(boxes, names, distances, confidences):
         # Print confidence
         cv2.rectangle(image, (x1, y1), (x2, y2), color=BGR_BLUE, thickness=RECTANGLES_THICKNESS)
@@ -27,13 +31,12 @@ def show_detections(image, boxes, names, distances, confidences, swap_to_RGB=Fal
         cv2.putText(image, txt, (x1 + RECTANGLES_THICKNESS, max(0, y1 - RECTANGLES_THICKNESS)),
                     fontFace=cv2.FONT_HERSHEY_SIMPLEX, fontScale=0.45,
                     color=BGR_BLUE, thickness=LETTERS_SIZE)
-    if swap_to_RGB:
-        image = cv2.cvtColor(image, code=cv2.COLOR_BGR2RGB)
+
     #cv2.imshow("Detector",image)
     #cv2.waitKey(20)
-	mtb.pyplot.figure(1)
-	mtb.pyplot.clf()
-	mtb.pyplot.imshow(image)
-	mtb.pyplot.pause(.001)
+    mtb.pyplot.figure("RobotEye")
+    mtb.pyplot.clf()
+    mtb.pyplot.imshow(cv2.cvtColor(image, code=cv2.COLOR_BGR2RGB))
+    mtb.pyplot.pause(.000001)
     return image
 
