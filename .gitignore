@@ -1,4 +1,6 @@
 .idea/
 Dataset/CompletePhotos/*/*.jpg
+Dataset/CompletePhotos/*/*.jpeg
+Dataset/CompletePhotos/*/*.png
 __pycache__/
 *.pyc
