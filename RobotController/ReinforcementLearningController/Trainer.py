@@ -20,7 +20,6 @@ from RobotController.ReinforcementLearningController.InputQueue import InputQueu
 from collections import deque
 PLOT_EVERY = 100
 
-MIN_RANDOM_ACTIONS = 10
 
 
 
@@ -29,7 +28,7 @@ class Trainer:
                  batch_size=DQN_BATCH_SIZE, loss = smooth_l1_loss, env = None, clip_weights = True,
                  episodes_between_saving=EPISODES_BETWEEN_SAVING, charge_data_from = RL_CONTROLLER_DIR, save_data_at = RL_CONTROLLER_DIR,
                  model_dir = RL_CONTROLLER_PTH_FILE, session_time = PLAY_SESSION_TIME_IN_SECONDS, input_last_actions = INPUT_LAST_ACTIONS,
-                 promote_improvement_in_reward=False):
+                 promote_improvement_in_reward=False, DQN_lr = DQN_LEARNING_RATE):
         """
         Include the double Q network and is in charge of train and manage it
         :param input_size:
@@ -40,7 +39,7 @@ class Trainer:
         self.input_size = (input_size*input_last_actions)+(action_size*(input_last_actions-1))
         self.input_buffer = InputQueue(capacity=input_last_actions, action_size = action_size)
         self.input_last_actions = input_last_actions
-        self.replay_buffer = ReplayBuffer(capacity=buffer_size)
+        self.buffer_size = buffer_size
         # Instantiate both models
         self.current_model = DQN(input_size=self.input_size, num_actions=action_size)
         if charge_data_from is not None:
@@ -49,7 +48,7 @@ class Trainer:
         self.target_model = DQN(input_size=self.input_size, num_actions=action_size)
 
         # Initialize the Adam optimizer and the replay states
-        self.optimizer = Adam(filter(lambda p: p.requires_grad, self.current_model.parameters()),lr=0.01)
+        self.optimizer = Adam(filter(lambda p: p.requires_grad, self.current_model.parameters()),lr=DQN_lr)
 
         # Make both networks start with the same weights
         self.update_target()
@@ -58,7 +57,7 @@ class Trainer:
         self.batch_size = batch_size
         self.gamma = gamma
         self.action_size = action_size
-        self.env = env if env is not None else World(objective_person='Eric')
+        self.env = env if env is not None else World(objective_person=None)
         self.loss = loss
         self.clip_weights = clip_weights
         self.episodes_between_saving = episodes_between_saving
@@ -69,7 +68,7 @@ class Trainer:
         if self.charge_data_from is None:
             self.losses, self.all_rewards = [], []
         else:
-            self.losses, self.all_rewards = self.charge_previous_losses_and_rewards(charge_from=self.charge_data_from)
+            self.losses, self.all_rewards, self.replay_buffer = self.charge_previous_losses_and_rewards(charge_from=self.charge_data_from)
         self.session_time = session_time
         # By default, this experiment is disabled. However, if it is determined that the robot should only
         # lose the person when it (otherwise) will collide with a piece of furniture, it could be activated.
@@ -156,16 +155,20 @@ class Trainer:
 
         episodes_between_saving = self.episodes_between_saving if episodes_between_saving is None else episodes_between_saving
         # Save the losses of the network and the rewards of each episode
+        reward = 0
         for i in range(self.input_last_actions):
             self.input_buffer.push_action(action=IDLE)
             partial_state, reward = self.env.step(IDLE)
             self.input_buffer.push_state(state=partial_state)
 
         if verbose:
-            print("Performing random movements for filling the batch")
+            if len(self.replay_buffer) < self.batch_size:
+                print("Performing random movements for filling the batch")
+            else:
+                print("Charged a previous replay buffer with {n} actions".format(n=len(self.replay_buffer)))
         composed_state = self.input_buffer.get_composed_state()
         last_reward = reward
-        for i in range(self.batch_size):
+        while len(self.replay_buffer) < self.batch_size:
             action = self.current_model.act(state=composed_state, epsilon=1.)
             partial_next_state, reward = self.env.step(action)
             self.input_buffer.push_action(action=action)
@@ -243,23 +246,27 @@ class Trainer:
 
     def save(self):
         self.current_model.save()
-        self.save_losses_and_rewards(charge_from=self.charge_data_from)
+        self.save_losses_rewards_and_buffer(charge_from=self.charge_data_from)
         self.plot_loss_and_rewards(save_at=self.save_data_at)
 
     def charge_previous_losses_and_rewards(self, charge_from = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
-                                           rewards_file=REWARDS_FILE_NAME):
-        losses_path, rewards_path = join(charge_from, losses_file), join(charge_from, rewards_file)
+                                           rewards_file=REWARDS_FILE_NAME,  replay_buffer_file = REPLAY_BUFFER_FILE_NAME):
+        losses_path, rewards_path, replay_buffer_path = join(charge_from, losses_file), join(charge_from, rewards_file), \
+                                                        join(charge_from, replay_buffer_file)
         losses = load(open(losses_path, 'r'+FILES_CODIFICATION)) if isfile(losses_path) else []
         rewards = load(open(rewards_path, 'r' + FILES_CODIFICATION)) if isfile(rewards_path) else []
-        return losses, rewards
+        replay_buffer = load(open(replay_buffer_path, 'r' + FILES_CODIFICATION)) if isfile(replay_buffer_path) else ReplayBuffer(capacity=self.buffer_size)
+        return losses, rewards, replay_buffer
 
-    def save_losses_and_rewards(self, charge_from = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
-                                           rewards_file=REWARDS_FILE_NAME):
+    def save_losses_rewards_and_buffer(self, charge_from = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
+                                       rewards_file=REWARDS_FILE_NAME, replay_buffer_file = REPLAY_BUFFER_FILE_NAME):
         if not isdir(charge_from):
             makedirs(charge_from)
-        losses_path, rewards_path = join(charge_from, losses_file), join(charge_from, rewards_file)
+        losses_path, rewards_path, replay_buffer_path = join(charge_from, losses_file), join(charge_from, rewards_file),\
+                                                        join(charge_from, replay_buffer_file)
         dump(self.losses,open(losses_path, 'w'+FILES_CODIFICATION))
         dump(self.all_rewards, open(rewards_path, 'w' + FILES_CODIFICATION))
+        dump(self.replay_buffer, open(replay_buffer_path, 'w' + FILES_CODIFICATION))
 
 
     def plot_loss_and_rewards(self, save_at = RL_CONTROLLER_DIR, smoothness_kernel_shape=SMOOTHNESS_KERNEL_SHAPE, smoothness_sigma=SMOOTHNESS_SIGMA):
