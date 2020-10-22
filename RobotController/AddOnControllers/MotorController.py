@@ -76,6 +76,7 @@ try:
         def idle(self, time=None):
             while self.asynchronous and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
+            self.stop()
             if self.asynchronous:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time))
             else:
@@ -93,6 +94,7 @@ try:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time))
             else:
                 sleep(time)
+                self.stop()
 
         def rotate(self, clockwise=True, time=None):
             while self.asynchronous and len(self.scheduler.get_jobs()) != 0: pass
@@ -105,6 +107,7 @@ try:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time))
             else:
                 sleep(time)
+                self.stop()
 
         def turn(self, right=True, time=None):
             while self.asynchronous and len(self.scheduler.get_jobs()) != 0: pass
@@ -123,6 +126,7 @@ try:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time))
             else:
                 sleep(time)
+                self.stop()
 except:
     warn("GPIO module not found. MotorController will be a Mock Object")
     """
@@ -143,7 +147,7 @@ except:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=0.01))
             else:
                 sleep(0.01)
-                self.executed_jobs += 1
+                self.stop()
 
         def move_straight(self, front=True, time=None):
             while self.asynchronous and len(self.scheduler.get_jobs()) != 0: pass
@@ -151,7 +155,7 @@ except:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=0.01))
             else:
                 sleep(0.01)
-                self.executed_jobs += 1
+                self.stop()
 
         def rotate(self, clockwise=True, time=None):
             while self.asynchronous and len(self.scheduler.get_jobs()) != 0: pass
@@ -159,7 +163,7 @@ except:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=0.01))
             else:
                 sleep(0.01)
-                self.executed_jobs += 1
+                self.stop()
 
         def turn(self, right=True, time=None):
             while self.asynchronous and len(self.scheduler.get_jobs()) != 0: pass
@@ -167,7 +171,7 @@ except:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=0.01))
             else:
                 sleep(0.01)
-                self.executed_jobs += 1
+                self.stop()
 
         def stop(self):
             self.executed_jobs+=1
