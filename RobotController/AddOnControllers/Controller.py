@@ -32,20 +32,26 @@ class Controller:
     def __setattr__(self, key, value):
         return setattr(self.instance, key, value)
 
-    def idle(self, time=None):
-        sleep(time if time is not None else 0.2)
+    def idle(self, time = None):
+        self.motor_controller.idle(time=time)
 
-    def move_forward(self, time=None):
-        self.motor_controller.move_straight(front = True, time=time)
+    def move_forward(self, time = None):
+        self.motor_controller.move_straight(front = True, time = time)
 
-    def move_back(self, time=None):
-        self.motor_controller.move_straight(front = False, time=time)
+    def move_back(self, time = None):
+        self.motor_controller.move_straight(front = False, time = time)
 
-    def turn_right(self, time=None):
-        self.motor_controller.rotate(clockwise = True, time=time)
+    def rotate_clockwise(self, time = None):
+        self.motor_controller.rotate(clockwise = True, time = time)
 
-    def turn_left(self, time=None):
-        self.motor_controller.rotate(clockwise = False, time=time)
+    def rotate_counterclockwise(self, time = None):
+        self.motor_controller.rotate(clockwise = False, time = time)
+
+    def go_right(self, time = None):
+        self.motor_controller.turn(right = True, time = time)
+
+    def go_left(self, time = None):
+        self.motor_controller.turn(right = False, time = time)
 
     def get_back_distance(self, back_distance_offset = 0.):
         return self.back_ultrasound_controller.get_distance()-back_distance_offset

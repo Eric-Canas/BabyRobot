@@ -6,16 +6,18 @@ from RobotController.ReinforcementLearningController.ReplayBuffer import ReplayB
 from torch import LongTensor, FloatTensor
 from torch.nn.functional import smooth_l1_loss
 from torch.optim import Adam
-from RobotController.ReinforcementLearningController.RLConstants import *
+from RobotController.RLConstants import *
 from warnings import warn
 from os.path import join, isfile, isdir
 from os import makedirs
 from Constants import DECIMALS
-from RobotController.ReinforcementLearningController.RLConstants import PLAY_SESSION_TIME_IN_SECONDS
+from RobotController.RLConstants import INPUT_LAST_ACTIONS
+from RobotController.RLConstants import PLAY_SESSION_TIME_IN_SECONDS
 import numpy as np
 from matplotlib import pyplot as plt
 from time import time
-
+from RobotController.ReinforcementLearningController.InputQueue import InputQueue
+from collections import deque
 PLOT_EVERY = 100
 
 MIN_RANDOM_ACTIONS = 10
@@ -26,23 +28,27 @@ class Trainer:
     def __init__(self, input_size = len(STATES_ORDER), action_size=len(ACTIONS_DEFINITION), gamma=GAMMA, buffer_size=DQN_REPLAY_BUFFER_CAPACITY,
                  batch_size=DQN_BATCH_SIZE, loss = smooth_l1_loss, env = None, clip_weights = True,
                  episodes_between_saving=EPISODES_BETWEEN_SAVING, charge_data_from = RL_CONTROLLER_DIR, save_data_at = RL_CONTROLLER_DIR,
-                 model_dir = RL_CONTROLLER_PTH_FILE, session_time = PLAY_SESSION_TIME_IN_SECONDS):
+                 model_dir = RL_CONTROLLER_PTH_FILE, session_time = PLAY_SESSION_TIME_IN_SECONDS, input_last_actions = INPUT_LAST_ACTIONS,
+                 promote_improvement_in_reward=False):
         """
         Include the double Q network and is in charge of train and manage it
         :param input_size:
         :param action_size:
-        :param buffer_size: int. Size of the replay buffer
+        :param buffer_size: int. Size of the replay states
         :param batch_size: int. Size of the Batch
         """
+        self.input_size = (input_size*input_last_actions)+(action_size*(input_last_actions-1))
+        self.input_buffer = InputQueue(capacity=input_last_actions, action_size = action_size)
+        self.input_last_actions = input_last_actions
         self.replay_buffer = ReplayBuffer(capacity=buffer_size)
         # Instantiate both models
-        self.current_model = DQN(input_size=input_size, num_actions=action_size)
+        self.current_model = DQN(input_size=self.input_size, num_actions=action_size)
         if charge_data_from is not None:
             self.current_model.load_weights(path=join(charge_data_from, model_dir))
 
-        self.target_model = DQN(input_size=input_size, num_actions=action_size)
+        self.target_model = DQN(input_size=self.input_size, num_actions=action_size)
 
-        # Initialize the Adam optimizer and the replay buffer
+        # Initialize the Adam optimizer and the replay states
         self.optimizer = Adam(filter(lambda p: p.requires_grad, self.current_model.parameters()),lr=0.01)
 
         # Make both networks start with the same weights
@@ -51,7 +57,6 @@ class Trainer:
         # Save the rest of parameters
         self.batch_size = batch_size
         self.gamma = gamma
-        self.input_size = input_size
         self.action_size = action_size
         self.env = env if env is not None else World(objective_person='Eric')
         self.loss = loss
@@ -59,11 +64,20 @@ class Trainer:
         self.episodes_between_saving = episodes_between_saving
         self.save_data_at = save_data_at
         self.charge_data_from = charge_data_from
+
+        self.step_time = deque(maxlen=EPISODES_BETWEEN_SAVING*3)
         if self.charge_data_from is None:
             self.losses, self.all_rewards = [], []
         else:
             self.losses, self.all_rewards = self.charge_previous_losses_and_rewards(charge_from=self.charge_data_from)
         self.session_time = session_time
+        # By default, this experiment is disabled. However, if it is determined that the robot should only
+        # lose the person when it (otherwise) will collide with a piece of furniture, it could be activated.
+        # (since this danger has higher influence in the reward than the distance to the person).
+        if promote_improvement_in_reward:
+            self.promote_improvement = lambda reward, last_reward: reward + ((reward-last_reward)*IMPROVEMENT_BONUS if reward > last_reward else 0)
+        else:
+            self.promote_improvement = lambda reward, last_reward: reward
 
     def get_action(self, state, epsilon = 0.):
         return self.current_model.act(state, epsilon=epsilon)
@@ -76,7 +90,7 @@ class Trainer:
 
     def compute_td_loss(self, samples):
         """
-        Compute the loss of batch size samples of the buffer, and train the current model network with that loss
+        Compute the loss of batch size samples of the states, and train the current model network with that loss
         :param samples: tuple of samples. Samples must have the format (state, action, reward, next_state)
         :return:
         float. Loss computed at this learning step
@@ -142,39 +156,59 @@ class Trainer:
 
         episodes_between_saving = self.episodes_between_saving if episodes_between_saving is None else episodes_between_saving
         # Save the losses of the network and the rewards of each episode
+        for i in range(self.input_last_actions):
+            self.input_buffer.push_action(action=IDLE)
+            partial_state, reward = self.env.step(IDLE)
+            self.input_buffer.push_state(state=partial_state)
 
-        state, reward = self.env.step(IDLE)
         if verbose:
             print("Performing random movements for filling the batch")
+        composed_state = self.input_buffer.get_composed_state()
+        last_reward = reward
         for i in range(self.batch_size):
-            action = self.current_model.act(state, epsilon=1.)
-            next_state, reward = self.env.step(action)
-
-            self.replay_buffer.push(state, action, reward, next_state)
-            state = next_state
+            action = self.current_model.act(state=composed_state, epsilon=1.)
+            partial_next_state, reward = self.env.step(action)
+            self.input_buffer.push_action(action=action)
+            self.input_buffer.push_state(state=partial_next_state)
+            composed_next_state = self.input_buffer.get_composed_state()
+            improved_reward = self.promote_improvement(reward=reward, last_reward=last_reward)
+            self.replay_buffer.push(composed_state, action, improved_reward, composed_next_state)
+            composed_state = composed_next_state
+            last_reward = reward
 
         if verbose:
             print("Starting the train!")
         start_time = time()
+
         for episode in range(1, train_episodes+1):
             episode_reward = 0
             actions_taken = []
             current_epsilon = self.epsilon_by_step(step=len(self.losses)+1)
             episode_losses = []
             for step in range(1, steps_per_episode+1):
+
                 # Gets an action for the current state having in account the current epsilon
-                action = self.current_model.act(state, epsilon=current_epsilon)
+                action = self.current_model.act(composed_state, epsilon=current_epsilon)
                 actions_taken.append(action)
                 if show:
                     self.env.render()
                 # Execute the action, capturing the new state, the reward and if the game is ended or not
-                next_state, reward = self.env.step(action)
-                # Save the action at the replay buffer
-                self.replay_buffer.push(state, action, reward, next_state)
+                if verbose:
+                    start_step_time = time()
+                partial_next_state, reward = self.env.step(action)
+                if verbose:
+                    self.step_time.append(time()-start_step_time)
+                self.input_buffer.push_action(action=action)
+                self.input_buffer.push_state(state=partial_next_state)
+                composed_next_state = self.input_buffer.get_composed_state()
+                # Save the action at the replay states
+                improved_reward = self.promote_improvement(reward=reward, last_reward=last_reward)
+                self.replay_buffer.push(composed_state, action, improved_reward, composed_next_state)
                 # Update the current state and the actual episode reward
-                state = next_state
+                composed_state = composed_next_state
                 episode_reward += reward
-                # If there are enough actions in the buffer for learning, start to learn a policy
+                last_reward = reward
+                # If there are enough actions in the states for learning, start to learn a policy
                 if step % ACTIONS_PER_TRAIN_STEP == 0:
                     # Train
                     loss = self.compute_td_loss(self.replay_buffer.sample(self.batch_size))
@@ -188,12 +222,15 @@ class Trainer:
             self.losses.append(np.mean(episode_losses))
             # If a game is finished save the results of that game and restart the game
             if verbose:
-                print("Episode Reward: {epReward}\n"
+                print("-"*50+'\n'
+                      "Episode Reward: {epReward}\n"
                       "Std of actions: {std}\n"
                       "Epsilon: {epsilon}\n"
-                      "Remaining Time: {time} s".format(epReward=round(episode_reward, ndigits=DECIMALS),
+                      "Time by Step: {timeStep} s\n"
+                      "Remaining Time: {time} s\n".format(epReward=round(episode_reward, ndigits=DECIMALS),
                                                       std=round(np.std(actions_taken), ndigits=DECIMALS*2),
                                                       epsilon = round(current_epsilon, ndigits=DECIMALS),
+                                                      timeStep=round(np.mean(self.step_time), ndigits=DECIMALS),
                                                       time = round(self.session_time-(time()-start_time), ndigits=DECIMALS)))
 
             if episodes_between_saving is not None and (episode % episodes_between_saving) == 0:

@@ -112,4 +112,14 @@ class RecognitionPipeline:
 
         return {name : (distance[0], distance[1]-y_offset) for distance, name in zip(distances, names)}
 
+    def get_distance_without_identities(self, image, y_offset=0.):
+        face_boxes = self.face_detector.predict(image=image)
+        if len(face_boxes):
+            face_boxes = [box for conf, box in face_boxes]
+            distances = self.camera_calculator.rectangleToRealWorldXY(rectangle=face_boxes[0], h=image.shape[0],
+                                                                      w=image.shape[1])
+            return (distances[0], distances[1] - y_offset)
+        else:
+            return ()
+
 

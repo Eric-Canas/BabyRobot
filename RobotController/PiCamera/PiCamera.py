@@ -40,7 +40,8 @@ try:
 
         def capture(self):
             self.raw_capture.truncate(0)
-            return super().capture(self.raw_capture, 'rgb')
+            super().capture(self.raw_capture, 'bgr')
+            return self.raw_capture.array
 except:
     warn("picamera module not found. PiCamera will be a Mock Object")
     from VisionEngine.Dataset import read_image

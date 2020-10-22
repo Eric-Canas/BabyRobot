@@ -1,10 +1,10 @@
 from collections import deque
 from numpy import array, float32
 from random import sample
-from RobotController.ReinforcementLearningController.RLConstants import DQN_REPLAY_BUFFER_CAPACITY, DQN_BATCH_SIZE
+from RobotController.RLConstants import DQN_REPLAY_BUFFER_CAPACITY, DQN_BATCH_SIZE
 
 
-class ReplayBuffer(object):
+class ReplayBuffer:
     def __init__(self, capacity = DQN_REPLAY_BUFFER_CAPACITY):
         self.buffer = deque(maxlen=capacity)
 

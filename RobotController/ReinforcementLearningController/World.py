@@ -1,6 +1,6 @@
 from RobotController.AddOnControllers.Controller import Controller
 from RecognitionPipeline import RecognitionPipeline
-from RobotController.ReinforcementLearningController.RLConstants import *
+from RobotController.RLConstants import *
 from Constants import KNOWN_NAMES
 import numpy as np
 
@@ -10,6 +10,9 @@ class World():
                  controller = None, recognition_pipeline = None, average_info_from_n_images = 1):
         if objective_person in KNOWN_NAMES:
             self.objective_person = objective_person
+        elif objective_person is None:
+            self.objective_person = None
+            print("Following anyone (Less secure but faster)")
         else:
             raise ValueError(str(objective_person) + ' is not a known person. Only those ones are known: '+', '.join(KNOWN_NAMES))
 
@@ -28,25 +31,36 @@ class World():
             self.controller.move_forward(time=time)
         elif action == BACK:
             self.controller.move_back(time=time)
+        elif action == CLOCKWISE:
+            self.controller.rotate_clockwise(time=time)
+        elif action == COUNTER_CLOCKWISE:
+            self.controller.rotate_counterclockwise(time=time)
         elif action == LEFT:
-            self.controller.turn_left(time=time)
+            self.controller.go_left(time=time)
         elif action == RIGHT:
-            self.controller.turn_right(time=time)
+            self.controller.go_right(time=time)
 
         # Discover new state
         new_state = np.empty(shape=len(STATES_ORDER), dtype=np.float32)
-
-        distances = [self.recognition_pipeline.get_distance_to_faces(image=self.controller.capture_image(), y_offset=self.distance_to_maintain)
+        if self.objective_person is not None:
+            distances = [self.recognition_pipeline.get_distance_to_faces(image=self.controller.capture_image(), y_offset=self.distance_to_maintain)
                             for _ in range(self.average_info_from_n_images)]
+            distances_to_person = [results[self.objective_person] for results in distances
+                                        if self.objective_person in results]
+        else:
+            distances = [self.recognition_pipeline.get_distance_without_identities(image=self.controller.capture_image(),
+                                                                         y_offset=self.distance_to_maintain)
+                                                                for _ in range(self.average_info_from_n_images)]
+            distances_to_person = [results for results in distances if len(results) > 0]
 
-        distances_to_person = [results[self.objective_person] for results in distances if self.objective_person in results]
 
         if len(distances_to_person) > 0:
-            new_state[:Y_DISTANCE_POS+1] = np.mean(distances_to_person, axis=0)
+            new_state[:Y_DIST_POS + 1] = np.mean(distances_to_person, axis=0)
             new_state[ARE_X_Y_VALID_POS] = 1.
         else:
             new_state[:ARE_X_Y_VALID_POS + 1] = (0., 0., 0.)
 
+        # TODO: Solve the problem with the sensor
         new_state[BACK_DISTANCE_POS] = self.controller.get_back_distance(back_distance_offset=self.back_security_distance)
 
         reward = get_state_reward(state=new_state)

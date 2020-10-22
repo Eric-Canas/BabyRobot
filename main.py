@@ -9,10 +9,12 @@ from VisionEngine.Embedding import Embedding
 from VisionEngine.MobileFaceNet import MobileFaceNet
 from RobotController.ReinforcementLearningController.Validator import Validator
 from Constants import DEFAULT_PERSON_TO_FOLLOW
+from RobotController.AddOnControllers.MotorController import MotorController
+from RobotController.RLConstants import MOVEMENT_TIME
 
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY")
 
-mode = "SHOW_DETECTIONS_DEMO"
+mode = "TRAIN_MOVEMENT"
 
 if mode.upper() == "CAPTURE_NEW_DATASET":
     # Start to capture images until "q" is clicked
@@ -31,23 +33,24 @@ elif mode.upper() == "SHOW_DETECTIONS_DEMO":
             pipeline.show_detections(image=frame)
 
 elif mode.upper() == "TRAIN_MOVEMENT":
-    person_to_follow = DEFAULT_PERSON_TO_FOLLOW
-    showing = True
+    # Train following only one person (without recognition) for improving the training velocity in a 70%
+    person_to_follow = None#DEFAULT_PERSON_TO_FOLLOW
+    showing = False
     pipeline = RecognitionPipeline()
-    controller = Controller()
+    controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, asynchronous=False))
     env = World(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,
                 average_info_from_n_images=1)
     trainer = Trainer(env=env)
-    trainer.train(show=True)
+    trainer.train(show=showing)
 elif mode.upper() == "PLAY":
     person_to_follow = DEFAULT_PERSON_TO_FOLLOW
     showing = True
     pipeline = RecognitionPipeline()
-    controller = Controller()
+    controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, asynchronous=False))
     env = World(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,
                 average_info_from_n_images=1)
     validator = Validator(person_to_follow=person_to_follow)
-    validator.validate(show=True)
+    validator.validate(show=showing)
 else:
     raise NotImplementedError()
 

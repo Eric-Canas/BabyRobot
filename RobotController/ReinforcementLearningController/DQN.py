@@ -4,7 +4,7 @@ from torch.nn import Sequential, Linear, ReLU, Module
 from torch.cuda import is_available
 from os.path import join, dirname, isdir, isfile
 from os import makedirs
-from RobotController.ReinforcementLearningController.RLConstants import RL_CONTROLLER_DIR, RL_CONTROLLER_PTH_FILE
+from RobotController.RLConstants import RL_CONTROLLER_DIR, RL_CONTROLLER_PTH_FILE
 from warnings import warn
 
 dev = device('cuda') if is_available() else device('cpu')

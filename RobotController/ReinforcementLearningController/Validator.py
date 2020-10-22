@@ -1,10 +1,10 @@
 from RobotController.ReinforcementLearningController.DQN import DQN
 from RobotController.ReinforcementLearningController.World import World
 from torch import no_grad
-from RobotController.ReinforcementLearningController.RLConstants import *
+from RobotController.RLConstants import *
 from os.path import join
 from Constants import DEFAULT_PERSON_TO_FOLLOW, DECIMALS
-from RobotController.ReinforcementLearningController.RLConstants import PLAY_SESSION_TIME_IN_SECONDS
+from RobotController.RLConstants import PLAY_SESSION_TIME_IN_SECONDS
 from numpy import mean
 from time import time
 
@@ -16,7 +16,7 @@ class Validator:
         Include the double Q network and is in charge of train and manage it
         :param input_size:
         :param action_size:
-        :param buffer_size: int. Size of the replay buffer
+        :param buffer_size: int. Size of the replay states
         :param batch_size: int. Size of the Batch
         """
         # Instantiate both models
