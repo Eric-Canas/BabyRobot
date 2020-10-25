@@ -3,6 +3,7 @@ from RecognitionPipeline import RecognitionPipeline
 from RobotController.RLConstants import *
 from Constants import KNOWN_NAMES
 import numpy as np
+from RobotController.ClientServer.Socket import Socket
 
 
 class World():
@@ -54,6 +55,7 @@ class World():
             distances_to_person = [results for results in distances if len(results) > 0]
 
 
+
         if len(distances_to_person) > 0:
             new_state[:Y_DIST_POS + 1] = np.mean(distances_to_person, axis=0)
             new_state[ARE_X_Y_VALID_POS] = 1.
@@ -69,7 +71,7 @@ class World():
 
     def render(self):
         image = self.controller.capture_image()
-        self.recognition_pipeline.show_detections(image=image)
+        self.recognition_pipeline.show_recognitions(image=image)
 
 def get_state_reward(state):
     y_dist, x_dist, are_x_y_valid, back_distance = state

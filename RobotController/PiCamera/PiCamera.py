@@ -72,7 +72,7 @@ def capture_dataset(pipeline, faces_dir = CROPPED_FACES_DATA_DIR, save_at=NEW_PR
     with PiCamera() as camera:
         for image in camera.capture_continuous():
             if show_it:
-                faces = pipeline.show_detections(image=image, return_faces=True)
+                faces = pipeline.show_recognitions(image=image, return_faces=True)
             else:
                 faces = pipeline.get_faces_in_image(image=image)
             for name in persons:

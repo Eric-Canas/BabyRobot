@@ -9,7 +9,7 @@ from torch.optim import Adam
 from RobotController.RLConstants import *
 from warnings import warn
 from os.path import join, isfile, isdir
-from os import makedirs
+from os import makedirs, listdir
 from Constants import DECIMALS
 from RobotController.RLConstants import INPUT_LAST_ACTIONS
 from RobotController.RLConstants import PLAY_SESSION_TIME_IN_SECONDS
@@ -17,6 +17,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from time import time
 from RobotController.ReinforcementLearningController.InputQueue import InputQueue
+from RobotController.ClientServer.ClientPipeline import ClientPipeline
 from collections import deque
 PLOT_EVERY = 100
 
@@ -58,6 +59,9 @@ class Trainer:
         self.gamma = gamma
         self.action_size = action_size
         self.env = env if env is not None else World(objective_person=None)
+        self.executing_on_server = type(self.env.recognition_pipeline) is ClientPipeline
+        if self.executing_on_server:
+            self.socket = self.env.recognition_pipeline.socket
         self.loss = loss
         self.clip_weights = clip_weights
         self.episodes_between_saving = episodes_between_saving
@@ -246,8 +250,12 @@ class Trainer:
 
     def save(self):
         self.current_model.save()
-        self.save_losses_rewards_and_buffer(charge_from=self.charge_data_from)
+        self.save_losses_rewards_and_buffer(save_data_at=self.save_data_at)
         self.plot_loss_and_rewards(save_at=self.save_data_at)
+        if self.executing_on_server:
+            # Save a copy on the server
+            for file in listdir(self.save_data_at):
+                self.socket.send_file(file_path=join(self.save_data_at, file))
 
     def charge_previous_losses_and_rewards(self, charge_from = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
                                            rewards_file=REWARDS_FILE_NAME,  replay_buffer_file = REPLAY_BUFFER_FILE_NAME):
@@ -258,12 +266,12 @@ class Trainer:
         replay_buffer = load(open(replay_buffer_path, 'r' + FILES_CODIFICATION)) if isfile(replay_buffer_path) else ReplayBuffer(capacity=self.buffer_size)
         return losses, rewards, replay_buffer
 
-    def save_losses_rewards_and_buffer(self, charge_from = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
+    def save_losses_rewards_and_buffer(self, save_data_at = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
                                        rewards_file=REWARDS_FILE_NAME, replay_buffer_file = REPLAY_BUFFER_FILE_NAME):
-        if not isdir(charge_from):
-            makedirs(charge_from)
-        losses_path, rewards_path, replay_buffer_path = join(charge_from, losses_file), join(charge_from, rewards_file),\
-                                                        join(charge_from, replay_buffer_file)
+        if not isdir(save_data_at):
+            makedirs(save_data_at)
+        losses_path, rewards_path, replay_buffer_path = join(save_data_at, losses_file), join(save_data_at, rewards_file), \
+                                                        join(save_data_at, replay_buffer_file)
         dump(self.losses,open(losses_path, 'w'+FILES_CODIFICATION))
         dump(self.all_rewards, open(rewards_path, 'w' + FILES_CODIFICATION))
         dump(self.replay_buffer, open(replay_buffer_path, 'w' + FILES_CODIFICATION))

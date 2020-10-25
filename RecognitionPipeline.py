@@ -20,7 +20,7 @@ class RecognitionPipeline:
         self.classifier = classifier if classifier is not None else Recognizer(embedding=self.embedding) # binary_recognition='Albaby')
         self.camera_calculator = camera_calculator if camera_calculator is not None else CameraCalculator()
 
-    def show_detections(self, image, verbose = True, return_faces = False):
+    def show_recognitions(self, image, verbose = False, return_faces = False):
         if verbose:
             start_time = time()
         boxes = self.face_detector.predict(image=image)
@@ -31,9 +31,11 @@ class RecognitionPipeline:
             faces = self.face_detector.crop_boxes_content(image=image, boxes=boxes)
             confidences.extend([confidence for confidence, _ in boxes])
             boxes = [box for _, box in boxes]
+
             if verbose:
                 embedding_start_time = time()
             embeddings = [self.embedding.predict(face) for face in faces]
+        
             if verbose:
                 embedding_time = time() - embedding_start_time
             if verbose:
@@ -87,6 +89,13 @@ class RecognitionPipeline:
         else:
             return {}
 
+    def show_detections(self, image):
+        boxes = self.face_detector.predict(image=image)
+        confidences = [conf for conf, _ in boxes]
+        boxes = [box for _, box in boxes]
+
+        show(image=image, boxes=boxes, names=None, distances=None, confidences=confidences)
+
     def get_faces_in_image(self, image):
         face_boxes = self.face_detector.predict(image=image)
         if len(face_boxes) > 0:
@@ -107,10 +116,11 @@ class RecognitionPipeline:
 
             distances = [self.camera_calculator.rectangleToRealWorldXY(rectangle=box, h=image.shape[0],
                                                                             w=image.shape[1]) for box in face_boxes]
+            distances = sum_y_offset(distances=distances, y_offset=y_offset)
         else:
             distances, names = [], []
 
-        return {name : (distance[0], distance[1]-y_offset) for distance, name in zip(distances, names)}
+        return {name : distances for distance, name in zip(distances, names)}
 
     def get_distance_without_identities(self, image, y_offset=0.):
         face_boxes = self.face_detector.predict(image=image)
@@ -118,8 +128,16 @@ class RecognitionPipeline:
             face_boxes = [box for conf, box in face_boxes]
             distances = self.camera_calculator.rectangleToRealWorldXY(rectangle=face_boxes[0], h=image.shape[0],
                                                                       w=image.shape[1])
-            return (distances[0], distances[1] - y_offset)
+            return sum_y_offset(distances=distances, y_offset=y_offset)
         else:
             return ()
+
+def sum_y_offset(distances, y_offset=0.):
+    if type(distances) is dict:
+        raise NotImplementedError()
+    elif type(distances[0]) not in [list, tuple]:
+        return (distances[0], distances[1] - y_offset)
+    else:
+        return [(x, y-y_offset) for x,y in distances]
 
 
