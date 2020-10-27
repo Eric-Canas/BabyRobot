@@ -14,8 +14,7 @@ class RecognitionPipeline:
 
         self.face_detector = face_detector if face_detector is not None else Detector(OpenCVFaceDetector())
         self.show_bodies = show_bodies
-        if show_bodies:
-            self.body_detector = body_detector if body_detector is not None else Detector(BodyDetector())
+        self.body_detector = body_detector if body_detector is not None else Detector(BodyDetector())
         self.embedding = embedding if embedding is not None else Embedding(MobileFaceNet())
         self.classifier = classifier if classifier is not None else Recognizer(embedding=self.embedding) # binary_recognition='Albaby')
         self.camera_calculator = camera_calculator if camera_calculator is not None else CameraCalculator()
@@ -91,10 +90,14 @@ class RecognitionPipeline:
 
     def show_detections(self, image):
         boxes = self.face_detector.predict(image=image)
+        if len(boxes) == 0:
+            boxes = self.body_detector.predict(image=image)
         confidences = [conf for conf, _ in boxes]
         boxes = [box for _, box in boxes]
+        distances = [self.camera_calculator.rectangleToRealWorldXY(rectangle=box, h=image.shape[0],
+                                                       w=image.shape[1]) for box in boxes]
 
-        show(image=image, boxes=boxes, names=None, distances=None, confidences=confidences)
+        show(image=image, boxes=boxes, names=None, distances=distances, confidences=confidences)
 
     def get_faces_in_image(self, image):
         face_boxes = self.face_detector.predict(image=image)
@@ -122,11 +125,13 @@ class RecognitionPipeline:
 
         return {name : distances for distance, name in zip(distances, names)}
 
-    def get_distance_without_identities(self, image, y_offset=0.):
-        face_boxes = self.face_detector.predict(image=image)
-        if len(face_boxes):
-            face_boxes = [box for conf, box in face_boxes]
-            distances = self.camera_calculator.rectangleToRealWorldXY(rectangle=face_boxes[0], h=image.shape[0],
+    def get_distance_without_identities(self, image, y_offset=0., detect_body_if_face_not_found = True):
+        boxes = self.face_detector.predict(image=image)
+        if detect_body_if_face_not_found and len(boxes) == 0:
+            boxes = self.body_detector.predict(image=image)
+        if len(boxes):
+            boxes = [box for conf, box in boxes]
+            distances = self.camera_calculator.rectangleToRealWorldXY(rectangle=boxes[0], h=image.shape[0],
                                                                       w=image.shape[1])
             return sum_y_offset(distances=distances, y_offset=y_offset)
         else:

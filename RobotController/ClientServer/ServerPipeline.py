@@ -20,4 +20,5 @@ class ServerPipeline:
             raise NotImplementedError()
         self.socket.send_results(results=result)
         if show:
-            self.pipeline.show_recognitions(image=image)
+
+            self.pipeline.show_detections(image=image)

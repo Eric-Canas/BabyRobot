@@ -9,6 +9,7 @@ import json
 from RobotController.ClientServer.ServerPipeline import SAVE_FILE_CODE, GET_DISTANCE_TO_FACES_CODE, \
     GET_DISTANCES_WITHOUT_IDENTITIES_CODE
 from os import SEEK_END
+import os
 import pickle
 
 try:
@@ -136,7 +137,9 @@ class Socket:
     def receive_file(self, save_it = True, verbose=True):
         file_path_length = struct.unpack(STRUCT_FORMAT, self.connection.read(struct.calcsize(STRUCT_FORMAT)))[0]
         file_path = self.connection.read(file_path_length).decode(STR_ENCODING)
-        if verbose: start_time = time()
+        if verbose:
+            print("Preparing for receive {f}".format(f=file_path))
+            start_time = time()
 
         if not file_path.endswith(PKL_EXTENSION):
             file_len = struct.unpack(STRUCT_FORMAT, self.connection.read(struct.calcsize(STRUCT_FORMAT)))[0]
@@ -151,6 +154,9 @@ class Socket:
                                                                                          seconds=round(time() - start_time, ndigits=DECIMALS),
                                                                                          kbsize=round(file_len / 1024, ndigits=DECIMALS)))
         if save_it:
+            directory = os.path.dirname(file_path)
+            if not os.path.exists(directory):
+                os.makedirs(directory)
             with open(file_path, mode='wb') as file:
                 if file_path.endswith(PKL_EXTENSION):
                     pickle.dump(data, file=file)

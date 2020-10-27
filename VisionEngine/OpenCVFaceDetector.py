@@ -23,7 +23,7 @@ class OpenCVFaceDetector:
         h, w = input.shape[:2]
         blob = blobFromImage(resize(input, self.input_size), scalefactor=1.0,
                              size=self.input_size,
-                             mean=TRAINING_MEAN, swapRB=True)
+                             mean=TRAINING_MEAN, swapRB=False)
         self.network.setInput(blob)
         detections = self.network.forward()
         boxes = self.process_output(output=detections, h=h, w=w)

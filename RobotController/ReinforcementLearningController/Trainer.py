@@ -29,7 +29,7 @@ class Trainer:
                  batch_size=DQN_BATCH_SIZE, loss = smooth_l1_loss, env = None, clip_weights = True,
                  episodes_between_saving=EPISODES_BETWEEN_SAVING, charge_data_from = RL_CONTROLLER_DIR, save_data_at = RL_CONTROLLER_DIR,
                  model_dir = RL_CONTROLLER_PTH_FILE, session_time = PLAY_SESSION_TIME_IN_SECONDS, input_last_actions = INPUT_LAST_ACTIONS,
-                 promote_improvement_in_reward=False, DQN_lr = DQN_LEARNING_RATE):
+                 promote_improvement_in_reward=False, DQN_lr = DQN_LEARNING_RATE, send_security_copy=False):
         """
         Include the double Q network and is in charge of train and manage it
         :param input_size:
@@ -81,6 +81,7 @@ class Trainer:
             self.promote_improvement = lambda reward, last_reward: reward + ((reward-last_reward)*IMPROVEMENT_BONUS if reward > last_reward else 0)
         else:
             self.promote_improvement = lambda reward, last_reward: reward
+        self.send_security_copy = send_security_copy
 
     def get_action(self, state, epsilon = 0.):
         return self.current_model.act(state, epsilon=epsilon)
@@ -252,7 +253,7 @@ class Trainer:
         self.current_model.save()
         self.save_losses_rewards_and_buffer(save_data_at=self.save_data_at)
         self.plot_loss_and_rewards(save_at=self.save_data_at)
-        if self.executing_on_server:
+        if self.executing_on_server and self.send_security_copy:
             # Save a copy on the server
             for file in listdir(self.save_data_at):
                 self.socket.send_file(file_path=join(self.save_data_at, file))
