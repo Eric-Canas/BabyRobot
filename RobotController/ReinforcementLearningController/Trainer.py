@@ -11,14 +11,15 @@ from warnings import warn
 from os.path import join, isfile, isdir
 from os import makedirs, listdir
 from Constants import DECIMALS
-from RobotController.RLConstants import INPUT_LAST_ACTIONS
-from RobotController.RLConstants import PLAY_SESSION_TIME_IN_SECONDS
+from RobotController.RLConstants import INPUT_LAST_ACTIONS, PLAY_SESSION_TIME_IN_SECONDS, ACTIONS_TELEOPERATED_KEYPAD_DEFINITON
 import numpy as np
 from matplotlib import pyplot as plt
 from time import time
 from RobotController.ReinforcementLearningController.InputQueue import InputQueue
 from RobotController.ClientServer.ClientPipeline import ClientPipeline
 from collections import deque
+from random import random, randrange
+from Utilities.GetKey import get_key
 PLOT_EVERY = 100
 
 
@@ -29,7 +30,7 @@ class Trainer:
                  batch_size=DQN_BATCH_SIZE, loss = smooth_l1_loss, env = None, clip_weights = True,
                  episodes_between_saving=EPISODES_BETWEEN_SAVING, charge_data_from = RL_CONTROLLER_DIR, save_data_at = RL_CONTROLLER_DIR,
                  model_dir = RL_CONTROLLER_PTH_FILE, session_time = PLAY_SESSION_TIME_IN_SECONDS, input_last_actions = INPUT_LAST_ACTIONS,
-                 promote_improvement_in_reward=False, DQN_lr = DQN_LEARNING_RATE, send_security_copy=False):
+                 promote_improvement_in_reward=False, DQN_lr = DQN_LEARNING_RATE, send_security_copy=False, tele_operate_exploration = False):
         """
         Include the double Q network and is in charge of train and manage it
         :param input_size:
@@ -82,10 +83,26 @@ class Trainer:
         else:
             self.promote_improvement = lambda reward, last_reward: reward
         self.send_security_copy = send_security_copy
+        self.tele_operate_exploration = tele_operate_exploration
 
     def get_action(self, state, epsilon = 0.):
-        return self.current_model.act(state, epsilon=epsilon)
+        if random() > epsilon:
+            action = self.current_model.act(state)
+        else:
+            if self.tele_operate_exploration:
+                action = self.request_for_action()
+            else:
+                action = randrange(self.action_size)
+        return action
 
+    def request_for_action(self):
+        print("Input a teleoperated action from the numeric pad:")
+        action = get_key()
+        if action == INVALID:
+            action = randrange(self.action_size)
+        else:
+            action = ACTIONS_TELEOPERATED_KEYPAD_DEFINITON[action]
+        return action
     def update_target(self):
         """
         Updates the target model with the weights of the current model
@@ -174,7 +191,7 @@ class Trainer:
         composed_state = self.input_buffer.get_composed_state()
         last_reward = reward
         while len(self.replay_buffer) < self.batch_size:
-            action = self.current_model.act(state=composed_state, epsilon=1.)
+            action = self.get_action(state=composed_state, epsilon=1.)
             partial_next_state, reward = self.env.step(action)
             self.input_buffer.push_action(action=action)
             self.input_buffer.push_state(state=partial_next_state)
@@ -196,7 +213,7 @@ class Trainer:
             for step in range(1, steps_per_episode+1):
 
                 # Gets an action for the current state having in account the current epsilon
-                action = self.current_model.act(composed_state, epsilon=current_epsilon)
+                action = self.get_action(state=composed_state, epsilon=current_epsilon)
                 actions_taken.append(action)
                 if show:
                     self.env.render()

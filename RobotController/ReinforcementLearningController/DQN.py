@@ -1,6 +1,6 @@
 from random import random, randrange
 from torch import load, save, FloatTensor, no_grad, device
-from torch.nn import Sequential, Linear, ReLU, Module
+from torch.nn import Sequential, Linear, ReLU, Module, Dropout
 from torch.cuda import is_available
 from os.path import join, dirname, isdir, isfile
 from os import makedirs
@@ -16,8 +16,10 @@ class DQN(Module):
         super(DQN, self).__init__()
         self.network = Sequential(Linear(input_size, 128),
                                   ReLU(inplace=True),
+                                  Dropout(p=0.25, inplace=True),
                                   Linear(128, 32),
                                   ReLU(inplace=True),
+                                  Dropout(p=0.25, inplace=True),
                                   Linear(32, num_actions))
         self.num_actions = num_actions
         self.input_size = input_size

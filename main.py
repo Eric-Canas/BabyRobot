@@ -15,10 +15,13 @@ from RobotController.ClientServer.Socket import Socket
 from RobotController.ClientServer.ServerPipeline import ServerPipeline, SAVE_FILE_CODE
 from RobotController.ClientServer.ClientPipeline import ClientPipeline
 
+import sys
+
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY", "SERVER")
 
 mode = "TRAIN_MOVEMENT"
 execute_on_server = True
+tele_operate_exploration = True
 
 if mode.upper() == "CAPTURE_NEW_DATASET":
     # Start to capture images until "q" is clicked
@@ -37,14 +40,17 @@ elif mode.upper() == "SHOW_DETECTIONS_DEMO":
             pipeline.show_recognitions(image=frame)
 
 elif mode.upper() == "TRAIN_MOVEMENT":
+
+    ip = sys.argv[1] if len(sys.argv) > 1 and execute_on_server else None
+
     # Train following only one person (without recognition) for improving the training velocity in a 70%
     person_to_follow = None#DEFAULT_PERSON_TO_FOLLOW
     showing = False
-    pipeline = RecognitionPipeline() if not execute_on_server else ClientPipeline(socket=Socket(client=True))
+    pipeline = RecognitionPipeline() if not execute_on_server else ClientPipeline(socket=Socket(client=True, ip=ip))
     controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, asynchronous=False))
     env = World(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,
                 average_info_from_n_images=1)
-    trainer = Trainer(env=env)
+    trainer = Trainer(env=env, tele_operate_exploration=tele_operate_exploration)
     trainer.train(show=showing)
 
 elif mode.upper() == "PLAY":
