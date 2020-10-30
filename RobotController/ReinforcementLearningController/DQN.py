@@ -14,13 +14,13 @@ print("Working on: {dev}".format(dev=dev))
 class DQN(Module):
     def __init__(self, input_size, num_actions):
         super(DQN, self).__init__()
-        self.network = Sequential(Linear(input_size, 128),
+        self.network = Sequential(Linear(input_size, 256),
                                   ReLU(inplace=True),
-                                  Dropout(p=0.25, inplace=False),
-                                  Linear(128, 32),
+                                  Dropout(p=0.5, inplace=False),
+                                  Linear(256, 64),
                                   ReLU(inplace=True),
-                                  Dropout(p=0.25, inplace=False),
-                                  Linear(32, num_actions))
+                                  Dropout(p=0.5, inplace=False),
+                                  Linear(64, num_actions))
         self.num_actions = num_actions
         self.input_size = input_size
         self.to(device=dev)

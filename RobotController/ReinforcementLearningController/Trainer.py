@@ -95,9 +95,9 @@ class Trainer:
                 action = randrange(self.action_size)
         return action
 
-    def request_for_action(self):
+    def request_for_action(self, timeout=REQUEST_FOR_ACTION_TIMEOUT):
         print("Input a teleoperated action from the numeric pad:")
-        action = get_key()
+        action = get_key(timeout=timeout)
         if action == INVALID:
             action = randrange(self.action_size)
         else:

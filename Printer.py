@@ -1,10 +1,4 @@
 from Constants import *
-import matplotlib as mtb
-try:
-    mtb.use('GTK3Cairo')
-except:
-    from warnings import warn
-    warn("PyCairo is not in use. If you are not viewing any plot install pycairo")
 import cv2
 
 def show_detections(image, boxes, names=None, distances = None, confidences = None):
@@ -39,9 +33,5 @@ def show_detections(image, boxes, names=None, distances = None, confidences = No
 
     cv2.imshow("Detector",image)
     cv2.waitKey(1)
-    #mtb.pyplot.figure("RobotEye")
-    #mtb.pyplot.clf()
-    #mtb.pyplot.imshow(cv2.cvtColor(image, code=cv2.COLOR_BGR2RGB))
-    #mtb.pyplot.pause(.000001)
     return image
 

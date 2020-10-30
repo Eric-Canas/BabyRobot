@@ -1,7 +1,11 @@
-sudo apt-get install unzip -y
+#!/bin/bash
 
-cd /home/pi/Desktop 
-wget --no-check-certificate --content-disposition https://github.com/Eric-Canas/BabyRobot/archive/main.zip
-unzip BabyRobot-main.zip -d .
-rm ./BabyRobot-main.zip
+# Go to the Desktop
+cd ~/Desktop 
+# If the software was already there remove it before downloading the last version
+if test -d ./BabyRobot; then
+    rm -r -f ./BabyRobot
+fi
+# Cloning the repository from github
+git clone https://github.com/Eric-Canas/BabyRobot
 cd ./BabyRobot-main
