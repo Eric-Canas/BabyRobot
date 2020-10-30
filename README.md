@@ -10,16 +10,11 @@ password: password
 
 For downloading the project:
 ```bash
-sudo apt-get install unzip -y
-
-cd Desktop 
-wget --no-check-certificate --content-disposition https://github.com/Eric-Canas/BabyRobot/archive/main.zip
-unzip BabyRobot-main.zip -d .
-rm ./BabyRobot-main.zip
+curl -s https://raw.githubusercontent.com/Eric-Canas/BabyRobot/main/download.sh | bash -s
 ```
 
 For executing it:
+
 ```bash
-cd BabyRobot-main
-python3 ./main.py
+python3 ./main.py [server_ip]
 ```
