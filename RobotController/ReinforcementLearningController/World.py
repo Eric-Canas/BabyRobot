@@ -36,10 +36,16 @@ class World():
             self.controller.rotate_clockwise(time=time)
         elif action == COUNTER_CLOCKWISE:
             self.controller.rotate_counterclockwise(time=time)
-        elif action == LEFT:
-            self.controller.go_left(time=time)
-        elif action == RIGHT:
-            self.controller.go_right(time=time)
+        elif action == LEFT_FRONT:
+            self.controller.go_left_front(time=time)
+        elif action == RIGHT_FRONT:
+            self.controller.go_right_front(time=time)
+        elif action == LEFT_BACK:
+            self.controller.go_left_back(time=time)
+        elif action == RIGHT_BACK:
+            self.controller.go_right_back(time=time)
+        else:
+            raise ValueError("Action {act} does not exist".format(act=action))
 
         # Discover new state
         new_state = np.empty(shape=len(STATES_ORDER), dtype=np.float32)

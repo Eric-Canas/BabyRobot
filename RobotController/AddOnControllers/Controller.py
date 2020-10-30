@@ -2,7 +2,6 @@ from RobotController.AddOnControllers.MotorController import MotorController
 from RobotController.AddOnControllers.BackUltraSoundController import BackUltraSoundController
 from RobotController.AddOnControllers.CameraController import CameraController
 from warnings import warn
-from time import sleep
 
 class Controller:
 
@@ -47,11 +46,17 @@ class Controller:
     def rotate_counterclockwise(self, time = None):
         self.motor_controller.rotate(clockwise = False, time = time)
 
-    def go_right(self, time = None):
-        self.motor_controller.turn(right = True, time = time)
+    def go_right_front(self, time = None):
+        self.motor_controller.turn(right = True, front=True, time = time, )
 
-    def go_left(self, time = None):
-        self.motor_controller.turn(right = False, time = time)
+    def go_left_front(self, time = None):
+        self.motor_controller.turn(right = False, front=True, time = time)
+
+    def go_right_back(self, time = None):
+        self.motor_controller.turn(right = True, front=False, time = time)
+
+    def go_left_back(self, time = None):
+        self.motor_controller.turn(right = False, front=False, time = time)
 
     def get_back_distance(self, back_distance_offset = 0.):
         return self.back_ultrasound_controller.get_distance()-back_distance_offset

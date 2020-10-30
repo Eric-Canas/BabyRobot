@@ -16,10 +16,10 @@ class DQN(Module):
         super(DQN, self).__init__()
         self.network = Sequential(Linear(input_size, 128),
                                   ReLU(inplace=True),
-                                  Dropout(p=0.25, inplace=True),
+                                  Dropout(p=0.25, inplace=False),
                                   Linear(128, 32),
                                   ReLU(inplace=True),
-                                  Dropout(p=0.25, inplace=True),
+                                  Dropout(p=0.25, inplace=False),
                                   Linear(32, num_actions))
         self.num_actions = num_actions
         self.input_size = input_size

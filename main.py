@@ -21,7 +21,7 @@ MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRA
 
 mode = "TRAIN_MOVEMENT"
 execute_on_server = True
-tele_operate_exploration = True
+teleoperated_exploration = True
 
 if mode.upper() == "CAPTURE_NEW_DATASET":
     # Start to capture images until "q" is clicked
@@ -50,7 +50,7 @@ elif mode.upper() == "TRAIN_MOVEMENT":
     controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, asynchronous=False))
     env = World(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,
                 average_info_from_n_images=1)
-    trainer = Trainer(env=env, tele_operate_exploration=tele_operate_exploration)
+    trainer = Trainer(env=env, tele_operate_exploration=teleoperated_exploration)
     trainer.train(show=showing)
 
 elif mode.upper() == "PLAY":

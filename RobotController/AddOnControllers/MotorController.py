@@ -5,11 +5,11 @@ from apscheduler.schedulers.background import BackgroundScheduler
 
 from RobotController.RLConstants import MOVEMENT_TIME
 
-MOTOR1_CLOCKWISE = 27
-MOTOR1_COUNTERCLOCKWISE = 17
+MOTOR1_CLOCKWISE = 17
+MOTOR1_COUNTERCLOCKWISE = 27
 
-MOTOR2_CLOCKWISE = 24
-MOTOR2_COUNTERCLOCKWISE = 23
+MOTOR2_CLOCKWISE = 23
+MOTOR2_COUNTERCLOCKWISE = 24
 
 try:
     import RPi.GPIO as GPIO
@@ -109,19 +109,19 @@ try:
                 sleep(time)
                 self.stop()
 
-        def turn(self, right=True, time=None):
+        def turn(self, right=True, time=None, front=True):
             while self.asynchronous and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
             if right:
-                GPIO.output(self.motor_left_clockwise, True)
-                GPIO.output(self.motor_left_counterclockwise, False)
+                GPIO.output(self.motor_left_clockwise, True and front)
+                GPIO.output(self.motor_left_counterclockwise, True and not front)
                 GPIO.output(self.motor_right_clockwise, False)
                 GPIO.output(self.motor_right_counterclockwise, False)
             else:
                 GPIO.output(self.motor_left_clockwise, False)
                 GPIO.output(self.motor_left_counterclockwise, False)
-                GPIO.output(self.motor_right_clockwise, True)
-                GPIO.output(self.motor_right_counterclockwise, False)
+                GPIO.output(self.motor_right_clockwise, True and front)
+                GPIO.output(self.motor_right_counterclockwise, True and not front)
             if self.asynchronous:
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time))
             else:
