@@ -1,14 +1,14 @@
 from RobotController.AddOnControllers.Controller import Controller
+from RobotController.AddOnControllers.MotorController import MotorController
 from RecognitionPipeline import RecognitionPipeline
 from RobotController.RLConstants import *
 from Constants import KNOWN_NAMES
 import numpy as np
-from RobotController.ClientServer.Socket import Socket
 
 
 class World():
     def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_M, back_security_distance_in_cm = BACK_SECURITY_DISTANCE_IN_M,
-                 controller = None, recognition_pipeline = None, average_info_from_n_images = 1):
+                 controller = None, recognition_pipeline = None, average_info_from_n_images = 1, movement_mode=DEFAULT_MOVEMENT_MODE):
         if objective_person in KNOWN_NAMES:
             self.objective_person = objective_person
         elif objective_person is None:
@@ -19,9 +19,10 @@ class World():
 
         self.distance_to_maintain = distance_to_maintain_in_m
         self.back_security_distance = back_security_distance_in_cm
-        self.controller = controller if controller is not None else Controller()
+        self.controller = controller if controller is not None else Controller(motor_controller=MotorController(movement_mode=movement_mode))
         self.recognition_pipeline = recognition_pipeline if recognition_pipeline is not None else RecognitionPipeline()
         self.average_info_from_n_images = average_info_from_n_images
+        self.movement_mode = movement_mode
 
 
     def step(self, action, time=None):

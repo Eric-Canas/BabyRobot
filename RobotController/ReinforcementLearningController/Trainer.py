@@ -23,14 +23,13 @@ from Utilities.GetKey import get_key
 PLOT_EVERY = 100
 
 
-
-
 class Trainer:
     def __init__(self, input_size = len(STATES_ORDER), action_size=len(ACTIONS_DEFINITION), gamma=GAMMA, buffer_size=DQN_REPLAY_BUFFER_CAPACITY,
                  batch_size=DQN_BATCH_SIZE, loss = smooth_l1_loss, env = None, clip_weights = True,
                  episodes_between_saving=EPISODES_BETWEEN_SAVING, charge_data_from = RL_CONTROLLER_DIR, save_data_at = RL_CONTROLLER_DIR,
                  model_dir = RL_CONTROLLER_PTH_FILE, session_time = PLAY_SESSION_TIME_IN_SECONDS, input_last_actions = INPUT_LAST_ACTIONS,
-                 promote_improvement_in_reward=False, DQN_lr = DQN_LEARNING_RATE, send_security_copy=False, tele_operate_exploration = False):
+                 promote_improvement_in_reward=False, DQN_lr = DQN_LEARNING_RATE, send_security_copy=False, tele_operate_exploration = False,
+                 verbose = True):
         """
         Include the double Q network and is in charge of train and manage it
         :param input_size:
@@ -68,7 +67,7 @@ class Trainer:
         self.episodes_between_saving = episodes_between_saving
         self.save_data_at = save_data_at
         self.charge_data_from = charge_data_from
-
+        self.verbose = verbose
         self.step_time = deque(maxlen=EPISODES_BETWEEN_SAVING*3)
         if self.charge_data_from is None:
             self.losses, self.all_rewards = [], []
@@ -96,12 +95,13 @@ class Trainer:
         return action
 
     def request_for_action(self, timeout=REQUEST_FOR_ACTION_TIMEOUT):
-        print("Input a teleoperated action from the numeric pad:")
         action = get_key(timeout=timeout)
+        if self.verbose: print("Teleoperated action introduced: {act}".format(act=action))
         if action == INVALID:
             action = randrange(self.action_size)
         else:
             action = ACTIONS_TELEOPERATED_KEYPAD_DEFINITON[action]
+
         return action
     def update_target(self):
         """
@@ -167,7 +167,7 @@ class Trainer:
         return epsilon_final + (epsilon_start - epsilon_final) * exp(-1. * step / epsilon_decay)
 
     def train(self, train_episodes = TRAIN_STEPS, steps_per_episode = STEPS_PER_EPISODE,
-              DQN_update_ratio = DQN_UPDATE_RATIO, verbose=True, show=False, episodes_between_saving = None):
+              DQN_update_ratio = DQN_UPDATE_RATIO, show=False, episodes_between_saving = None):
         """
         Train the network in the given environment for an amount of frames
         :param env:
@@ -183,7 +183,7 @@ class Trainer:
             partial_state, reward = self.env.step(IDLE)
             self.input_buffer.push_state(state=partial_state)
 
-        if verbose:
+        if self.verbose:
             if len(self.replay_buffer) < self.batch_size:
                 print("Performing random movements for filling the batch")
             else:
@@ -201,7 +201,7 @@ class Trainer:
             composed_state = composed_next_state
             last_reward = reward
 
-        if verbose:
+        if self.verbose:
             print("Starting the train!")
         start_time = time()
 
@@ -218,11 +218,10 @@ class Trainer:
                 if show:
                     self.env.render()
                 # Execute the action, capturing the new state, the reward and if the game is ended or not
-                if verbose:
-                    start_step_time = time()
+                if self.verbose: start_step_time = time()
                 partial_next_state, reward = self.env.step(action)
-                if verbose:
-                    self.step_time.append(time()-start_step_time)
+                if self.verbose: self.step_time.append(time()-start_step_time)
+
                 self.input_buffer.push_action(action=action)
                 self.input_buffer.push_state(state=partial_next_state)
                 composed_next_state = self.input_buffer.get_composed_state()
@@ -246,7 +245,7 @@ class Trainer:
             self.all_rewards.append(episode_reward)
             self.losses.append(np.mean(episode_losses))
             # If a game is finished save the results of that game and restart the game
-            if verbose:
+            if self.verbose:
                 print("-"*50+'\n'
                       "Episode Reward: {epReward}\n"
                       "Std of actions: {std}\n"
@@ -262,8 +261,7 @@ class Trainer:
                 self.save()
             if self.session_time-(time()-start_time) < 0:
                 self.save()
-                if verbose:
-                    print("Training time finished. Execute again for resuming the train")
+                if self.verbose: print("Training time finished. Execute again for resuming the train")
                 return None
 
     def save(self):

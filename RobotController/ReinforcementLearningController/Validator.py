@@ -24,7 +24,7 @@ class Validator:
         if charge_data_from is not None:
             self.current_model.load_weights(path=join(charge_data_from, model_dir))
         else:
-            raise FileNotFoundError("Trying to play in validation mode but lacking a pth ControllerModel")
+            raise FileNotFoundError("Trying to play in validation execution_mode but lacking a pth ControllerModel")
 
         self.input_size = input_size
         self.action_size = action_size

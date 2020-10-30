@@ -10,7 +10,7 @@ from VisionEngine.MobileFaceNet import MobileFaceNet
 from RobotController.ReinforcementLearningController.Validator import Validator
 from Constants import DEFAULT_PERSON_TO_FOLLOW
 from RobotController.AddOnControllers.MotorController import MotorController
-from RobotController.RLConstants import MOVEMENT_TIME
+from RobotController.RLConstants import MOVEMENT_TIME, HALF_MODE
 from RobotController.ClientServer.Socket import Socket
 from RobotController.ClientServer.ServerPipeline import ServerPipeline, SAVE_FILE_CODE
 from RobotController.ClientServer.ClientPipeline import ClientPipeline
@@ -18,28 +18,28 @@ from RobotController.ClientServer.ClientPipeline import ClientPipeline
 import sys
 
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY", "SERVER")
-
-mode = "TRAIN_MOVEMENT"
-execute_on_server = True
+execution_mode = "TRAIN_MOVEMENT"
+movement_mode = HALF_MODE
+execute_on_server = False
 teleoperated_exploration = True
 
-if mode.upper() == "CAPTURE_NEW_DATASET":
+if execution_mode.upper() == "CAPTURE_NEW_DATASET":
     # Start to capture images until "q" is clicked
     capture_dataset(pipeline=RecognitionPipeline())
 
-elif mode.upper() == "TRAIN_RECOGNIZER":
+elif execution_mode.upper() == "TRAIN_RECOGNIZER":
     embedder = Embedding(MobileFaceNet())
     # Train the final face recognizer
     train_recognizer(dataset=Dataset().faces_dataset, embedder=embedder)
 
-elif mode.upper() == "SHOW_DETECTIONS_DEMO":
+elif execution_mode.upper() == "SHOW_DETECTIONS_DEMO":
     # Start to capture images and to show detections in them
     pipeline = RecognitionPipeline()
     with PiCamera() as camera:
         for frame in camera.capture_continuous():
             pipeline.show_recognitions(image=frame)
 
-elif mode.upper() == "TRAIN_MOVEMENT":
+elif execution_mode.upper() == "TRAIN_MOVEMENT":
 
     ip = sys.argv[1] if len(sys.argv) > 1 and execute_on_server else None
 
@@ -47,23 +47,23 @@ elif mode.upper() == "TRAIN_MOVEMENT":
     person_to_follow = None#DEFAULT_PERSON_TO_FOLLOW
     showing = False
     pipeline = RecognitionPipeline() if not execute_on_server else ClientPipeline(socket=Socket(client=True, ip=ip))
-    controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, asynchronous=False))
+    controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, movement_mode=movement_mode))
     env = World(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,
-                average_info_from_n_images=1)
+                average_info_from_n_images=1, movement_mode=movement_mode)
     trainer = Trainer(env=env, tele_operate_exploration=teleoperated_exploration)
     trainer.train(show=showing)
 
-elif mode.upper() == "PLAY":
+elif execution_mode.upper() == "PLAY":
     person_to_follow = DEFAULT_PERSON_TO_FOLLOW
     showing = True
     pipeline = RecognitionPipeline()
-    controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, asynchronous=False))
+    controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, movement_mode=movement_mode))
     env = World(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,
-                average_info_from_n_images=1)
+                average_info_from_n_images=1, movement_mode=movement_mode)
     validator = Validator(person_to_follow=person_to_follow)
     validator.validate(show=showing)
 
-elif mode.upper() == 'SERVER':
+elif execution_mode.upper() == 'SERVER':
     socket = Socket(client=False)
     server_pipeline = ServerPipeline(self_socket=socket)
     while True:

@@ -8,4 +8,4 @@ if test -d ./BabyRobot; then
 fi
 # Cloning the repository from github
 git clone https://github.com/Eric-Canas/BabyRobot
-cd ./BabyRobot-main
+cd ./BabyRobot

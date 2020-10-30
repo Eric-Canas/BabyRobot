@@ -1,5 +1,5 @@
 from Constants import NEW_PROPOSALS_DATA_DIR, CROPPED_FACES_DATA_DIR
-from RobotController.PiCamera.CameraCalculator.PiCameraV2Parameters import PREFERRED_RESOLUTION, FRAME_RATE
+from RobotController.PiCamera.CameraCalculator.PiCameraV2Parameters import PREFERRED_RESOLUTION, FRAME_RATE, DEFAULT_PICAMERA_SHUTTER_SPEED
 
 import cv2
 import os
@@ -12,15 +12,18 @@ try:
 
     class PiCamera(SuperPiCamera):
         class __PiCamera(SuperPiCamera):
-            def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE, FRAME_RATE // 3)):
+            def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE//3, FRAME_RATE), shutter_speed = DEFAULT_PICAMERA_SHUTTER_SPEED):
                 super().__init__(resolution=resolution, framerate_range=framerate_range)
+                if shutter_speed != 0: self.shutter_speed = shutter_speed
+                self.video_stabilization = True
                 self.raw_capture = PiRGBArray(self, size=self.resolution)
 
         instance = None
 
-        def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE, FRAME_RATE // 3)):
+        def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE, FRAME_RATE // 3), shutter_speed = DEFAULT_PICAMERA_SHUTTER_SPEED):
             if PiCamera.instance is None:
-                PiCamera.instance = PiCamera.__PiCamera(resolution=resolution, framerate_range=framerate_range)
+                PiCamera.instance = PiCamera.__PiCamera(resolution=resolution, framerate_range=framerate_range,
+                                                        shutter_speed = shutter_speed)
             else:
                 warn("Trying to reinstantiate a the Singleton class controller. Instantation skipped")
 
@@ -48,7 +51,8 @@ except:
     from Constants import FULL_PHOTOS_DATA_DIR
     from random import choice
     class PiCamera():
-        def __init__(self, resolution = PREFERRED_RESOLUTION, framerate_range = (FRAME_RATE, FRAME_RATE//3)):
+        def __init__(self, resolution = PREFERRED_RESOLUTION, framerate_range = (FRAME_RATE, FRAME_RATE//3),
+                     shutter_speed = DEFAULT_PICAMERA_SHUTTER_SPEED):
             self.resolution = resolution
             self.framerate_range = framerate_range
         def __enter__(self):
