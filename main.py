@@ -10,7 +10,7 @@ from VisionEngine.MobileFaceNet import MobileFaceNet
 from RobotController.ReinforcementLearningController.Validator import Validator
 from Constants import DEFAULT_PERSON_TO_FOLLOW
 from RobotController.AddOnControllers.MotorController import MotorController
-from RobotController.RLConstants import MOVEMENT_TIME, HALF_MODE
+from RobotController.RLConstants import MOVEMENT_TIME, HALF_MODE, ONE_THIRD_MODE
 from RobotController.ClientServer.Socket import Socket
 from RobotController.ClientServer.ServerPipeline import ServerPipeline, SAVE_FILE_CODE
 from RobotController.ClientServer.ClientPipeline import ClientPipeline
@@ -19,8 +19,8 @@ import sys
 
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY", "SERVER")
 execution_mode = "TRAIN_MOVEMENT"
-movement_mode = HALF_MODE
-execute_on_server = False
+movement_mode = ONE_THIRD_MODE
+execute_on_server = True
 teleoperated_exploration = True
 
 if execution_mode.upper() == "CAPTURE_NEW_DATASET":

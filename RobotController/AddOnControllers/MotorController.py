@@ -3,7 +3,7 @@ from warnings import warn
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 
-from RobotController.RLConstants import MOVEMENT_TIME, DEFAULT_MOVEMENT_MODE, SYNC_MODE, ASYNC_MODE, HALF_MODE
+from RobotController.RLConstants import MOVEMENT_TIME, DEFAULT_MOVEMENT_MODE, SYNC_MODE, ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE
 
 MOTOR1_CLOCKWISE = 17
 MOTOR1_COUNTERCLOCKWISE = 27
@@ -74,6 +74,9 @@ try:
             elif self.movement_mode == HALF_MODE:
                 sleep(time / 2)
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time / 2))
+            elif self.movement_mode == ONE_THIRD_MODE:
+                sleep(time * 0.33)
+                self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time *0.66))
             elif self.movement_mode == SYNC_MODE:
                 sleep(time)
                 self.stop()
@@ -87,7 +90,7 @@ try:
             GPIO.output(self.motor_right_counterclockwise, False)
 
         def idle(self, time=None):
-            while self.movement_mode in [ASYNC_MODE, HALF_MODE] and len(self.scheduler.get_jobs()) != 0: pass
+            while self.movement_mode in [ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE] and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
             self.stop()
             self.keep_movement(time=time)
@@ -95,7 +98,7 @@ try:
 
 
         def move_straight(self, front=True, time=None):
-            while self.movement_mode in [ASYNC_MODE, HALF_MODE] and len(self.scheduler.get_jobs()) != 0: pass
+            while self.movement_mode in [ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE] and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
             GPIO.output(self.motor_left_clockwise, front)
             GPIO.output(self.motor_left_counterclockwise, not front)
@@ -104,7 +107,7 @@ try:
             self.keep_movement(time=time)
 
         def rotate(self, clockwise=True, time=None):
-            while self.movement_mode in [ASYNC_MODE, HALF_MODE] and len(self.scheduler.get_jobs()) != 0: pass
+            while self.movement_mode in [ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE] and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
             GPIO.output(self.motor_left_clockwise, clockwise)
             GPIO.output(self.motor_left_counterclockwise, not clockwise)
@@ -113,18 +116,18 @@ try:
             self.keep_movement(time=time)
 
         def turn(self, right=True, time=None, front=True):
-            while self.movement_mode in [ASYNC_MODE, HALF_MODE] and len(self.scheduler.get_jobs()) != 0: pass
+            while self.movement_mode in [ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE] and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
             if right:
-                GPIO.output(self.motor_left_clockwise, True and front)
-                GPIO.output(self.motor_left_counterclockwise, True and not front)
+                GPIO.output(self.motor_left_clockwise, front)
+                GPIO.output(self.motor_left_counterclockwise, not front)
                 GPIO.output(self.motor_right_clockwise, False)
                 GPIO.output(self.motor_right_counterclockwise, False)
             else:
                 GPIO.output(self.motor_left_clockwise, False)
                 GPIO.output(self.motor_left_counterclockwise, False)
-                GPIO.output(self.motor_right_clockwise, True and front)
-                GPIO.output(self.motor_right_counterclockwise, True and not front)
+                GPIO.output(self.motor_right_clockwise, front)
+                GPIO.output(self.motor_right_counterclockwise, not front)
             self.keep_movement(time=time)
 except:
     warn("GPIO module not found. MotorController will be a Mock Object")
@@ -146,6 +149,9 @@ except:
             elif self.movement_mode == HALF_MODE:
                 sleep(time / 2)
                 self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time / 2))
+            elif self.movement_mode == ONE_THIRD_MODE:
+                sleep(time * 0.33)
+                self.scheduler.add_job(self.stop, trigger='date', run_date=datetime.now() + timedelta(seconds=time * 0.66))
             elif self.movement_mode == SYNC_MODE:
                 sleep(time)
                 self.stop()
