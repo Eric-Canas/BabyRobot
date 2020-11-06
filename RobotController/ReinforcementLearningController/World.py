@@ -7,7 +7,7 @@ import numpy as np
 
 
 class World():
-    def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_M, back_security_distance_in_cm = BACK_SECURITY_DISTANCE_IN_M,
+    def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_M, wall_security_distance_in_cm = WALL_SECURITY_DISTANCE_IN_M,
                  controller = None, recognition_pipeline = None, average_info_from_n_images = 1, movement_mode=DEFAULT_MOVEMENT_MODE):
         if objective_person in KNOWN_NAMES:
             self.objective_person = objective_person
@@ -18,7 +18,7 @@ class World():
             raise ValueError(str(objective_person) + ' is not a known person. Only those ones are known: '+', '.join(KNOWN_NAMES))
 
         self.distance_to_maintain = distance_to_maintain_in_m
-        self.back_security_distance = back_security_distance_in_cm
+        self.wall_security_distance = wall_security_distance_in_cm
         self.controller = controller if controller is not None else Controller(motor_controller=MotorController(movement_mode=movement_mode))
         self.recognition_pipeline = recognition_pipeline if recognition_pipeline is not None else RecognitionPipeline()
         self.average_info_from_n_images = average_info_from_n_images
@@ -70,7 +70,8 @@ class World():
             new_state[:ARE_X_Y_VALID_POS + 1] = (0., 0., 0.)
 
         # TODO: Solve the problem with the sensor
-        new_state[BACK_DISTANCE_POS] = self.controller.get_back_distance(back_distance_offset=self.back_security_distance)
+        new_state[BACK_DISTANCE_POS] = self.controller.get_back_distance(distance_offset=self.wall_security_distance)
+        new_state[FRONT_DISTANCE_POS] = self.controller.get_front_distance(distance_offset=self.wall_security_distance)
 
         reward = get_state_reward(state=new_state)
         return new_state, reward
@@ -81,7 +82,7 @@ class World():
         self.recognition_pipeline.show_recognitions(image=image)
 
 def get_state_reward(state):
-    y_dist, x_dist, are_x_y_valid, back_distance = state
+    y_dist, x_dist, are_x_y_valid, back_distance, front_distance = state
 
     if not np.isclose(are_x_y_valid, 0.):
         if y_dist < 0:
@@ -96,10 +97,11 @@ def get_state_reward(state):
     else:
         dist_to_person_reward = MIN_REWARD_BY_PARAM * LOSE_THE_PERSON_INFLUENCE
     # Remember that in this case, less or equal than 0 is dangerous threshold surpassed
-    back_distance_reward = map_reward(back_distance, in_min=0., in_max=DANGEROUS_BACK_DISTANCE-BACK_SECURITY_DISTANCE_IN_M)
-    back_distance_reward *= BACK_DISTANCE_INFLUENCE
+    wall_distance_reward = map_reward(back_distance, in_min=0., in_max=DANGEROUS_WALL_DISTANCE - WALL_SECURITY_DISTANCE_IN_M) \
+                           + map_reward(front_distance, in_min=0., in_max=DANGEROUS_WALL_DISTANCE - WALL_SECURITY_DISTANCE_IN_M)
+    wall_distance_reward *= WALL_DISTANCE_INFLUENCE
 
-    return dist_to_person_reward+back_distance_reward
+    return dist_to_person_reward+wall_distance_reward
 
 def map_reward(x, in_min, in_max, out_min=MIN_REWARD_BY_PARAM, out_max=MAX_REWARD_BY_PARAM):
   # Arduino Map

@@ -1,5 +1,5 @@
 from RobotController.AddOnControllers.MotorController import MotorController
-from RobotController.AddOnControllers.BackUltraSoundController import BackUltraSoundController
+from RobotController.AddOnControllers.UltraSoundController import UltraSoundController, BACK_ECHO, BACK_TRIGGER, FRONT_ECHO, FRONT_TRIGGER
 from RobotController.AddOnControllers.CameraController import CameraController
 from warnings import warn
 
@@ -12,16 +12,18 @@ class Controller:
     will keep the DQN containing the current Policy (The target model)
     """
     class __Controller:
-        def __init__(self, motor_controller = None, back_ultrasound_controller = None, camera_controller = None):
+        def __init__(self, motor_controller = None, back_ultrasound_controller = None, front_ultrasound_controller = None, camera_controller = None):
             self.motor_controller = motor_controller if motor_controller is not None else MotorController()
-            self.back_ultrasound_controller = back_ultrasound_controller if back_ultrasound_controller is not None else BackUltraSoundController()
+            self.back_ultrasound_controller = back_ultrasound_controller if back_ultrasound_controller is not None else UltraSoundController(echo_pin=BACK_ECHO, trigger_pin=BACK_TRIGGER)
+            self.front_ultrasound_controller = front_ultrasound_controller if front_ultrasound_controller is not None else UltraSoundController(echo_pin=FRONT_ECHO, trigger_pin=FRONT_TRIGGER)
             self.camera_controller = camera_controller if camera_controller is not None else CameraController()
             self.capture_continuous = self.camera_controller.capture_continuous
 
     instance = None
-    def __init__(self, motor_controller = None, back_ultrasound_controller = None):
+    def __init__(self, motor_controller = None, back_ultrasound_controller = None, front_ultrasound_controller = None, camera_controller = None):
         if Controller.instance is None:
-            Controller.instance = Controller.__Controller(motor_controller=motor_controller, back_ultrasound_controller=back_ultrasound_controller)
+            Controller.instance = Controller.__Controller(motor_controller=motor_controller, back_ultrasound_controller=back_ultrasound_controller,
+                                                          front_ultrasound_controller=front_ultrasound_controller, camera_controller=camera_controller)
         else:
             warn("Trying to reinstantiate a the Singleton class controller. Instantation skipped")
 
@@ -58,8 +60,11 @@ class Controller:
     def go_left_back(self, time = None):
         self.motor_controller.turn(right = False, front=False, time = time)
 
-    def get_back_distance(self, back_distance_offset = 0.):
-        return self.back_ultrasound_controller.get_distance()-back_distance_offset
+    def get_back_distance(self, distance_offset = 0.):
+        return self.back_ultrasound_controller.get_distance() - distance_offset
+
+    def get_front_distance(self, distance_offset = 0.):
+        return self.front_ultrasound_controller.get_distance()-distance_offset
 
     def capture_image(self):
         return self.camera_controller.capture()

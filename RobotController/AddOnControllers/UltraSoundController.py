@@ -1,48 +1,33 @@
 from time import sleep, time
 from warnings import warn
 
-ECHO = 5
-TRIG = 6
+BACK_ECHO = 4
+BACK_TRIGGER = 18
+FRONT_ECHO = 20
+FRONT_TRIGGER = 21
 SOUND_M_BY_SEC = 343
 SIGNAL_TIME = 1e-05
 TIMEOUT = 0.05
 TIMEOUT_CONSTANT = 5.
 try:
     import RPi.GPIO as GPIO
-    class BackUltraSoundController:
-        class __BackUltraSoundController:
-            def __init__(self, echo_pin = ECHO, trigger_pin = TRIG, timeout = TIMEOUT):
-                self.echo = echo_pin
-                self.trigger = trigger_pin
-                self.timeout = timeout
+    class UltraSoundController:
+        def __init__(self, echo_pin = BACK_ECHO, trigger_pin = BACK_TRIGGER, timeout = TIMEOUT):
+            self.echo = echo_pin
+            self.trigger = trigger_pin
+            self.timeout = timeout
 
-                GPIO.setmode(GPIO.BCM)
+            GPIO.setmode(GPIO.BCM)
 
-                GPIO.setup(self.trigger, GPIO.OUT)
-                GPIO.setup(self.echo, GPIO.IN)
-                GPIO.output(self.trigger, True)
-                sleep(SIGNAL_TIME*100)
-                GPIO.output(self.trigger, False)
-                sleep(1.)
-
-        instance = None
-
-        def __init__(self, echo_pin = ECHO, trigger_pin = TRIG):
-            if BackUltraSoundController.instance is None:
-                BackUltraSoundController.instance = BackUltraSoundController.__BackUltraSoundController(echo_pin=echo_pin,
-                                                                                                        trigger_pin=trigger_pin)
-            else:
-                warn("Trying to re-instantiate a the Singleton class controller. Instantiation skipped")
+            GPIO.setup(self.trigger, GPIO.OUT)
+            GPIO.setup(self.echo, GPIO.IN)
+            GPIO.output(self.trigger, True)
+            sleep(SIGNAL_TIME * 100)
+            GPIO.output(self.trigger, False)
+            sleep(1.)
 
         def __exit__(self, exc_type, exc_value, traceback):
             self.cleanup()
-            BackUltraSoundController.instance = None
-
-        def __getattr__(self, item):
-            return getattr(self.instance, item)
-
-        def __setattr__(self, key, value):
-            return setattr(self.instance, key, value)
 
         def cleanup(self):
             GPIO.cleanup()
@@ -79,13 +64,13 @@ try:
 
             return distance_in_m
 except:
-    warn("GPIO not found. BackUltraSoundController will be a Mock Object")
+    warn("GPIO not found. UltraSoundController will be a Mock Object")
     """
     If raspberry is not reachable make a Mock Object for testing.
     """
     from random import uniform
-    class BackUltraSoundController:
-        def __init__(self, echo_pin=ECHO, trigger_pin=TRIG, timeout=TIMEOUT):
+    class UltraSoundController:
+        def __init__(self, echo_pin=BACK_ECHO, trigger_pin=BACK_TRIGGER, timeout=TIMEOUT):
             pass
 
         def get_distance(self):

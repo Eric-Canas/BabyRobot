@@ -36,5 +36,5 @@ RECTANGLES_THICKNESS = 3
 LETTERS_SIZE = 2
 CHARGED_WIDTH = 512
 
-FACE_HEIGHT = 17 #For the picture that we are using for training
-FACE_WIDTH = 15
+FACE_HEIGHT = 12 #For the picture that we are using for training
+FACE_WIDTH = 8
