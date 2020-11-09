@@ -29,7 +29,6 @@ PKL_EXTENSION = '.pkl'
 class Socket:
     def __init__(self, client=CLIENT, server_hostname = SERVER_HOSTNAME, tcp_port=TCP_PORT, ip=None, verbose=True):
         self.client = client
-        self.server_hostname = server_hostname
         self.tcp_port = tcp_port
         self.socket = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
 
@@ -39,11 +38,13 @@ class Socket:
             self.server_ip = socket.gethostbyname(server_hostname)
 
         if self.client:
+            self.server_hostname = server_hostname
             if verbose: print("Trying to connect to the server located at {name}:{port} ({ip})...".format(name=self.server_hostname, port=self.tcp_port, ip=self.server_ip))
             self.socket.connect((self.server_ip, self.tcp_port))
             if verbose: print("Connected.")
             self.connection = self.socket.makefile(mode='wb')
         else:
+            self.server_hostname = socket.gethostname()
             if verbose: print("Opening a TCP server at {name}:{port} ({ip})...".format(name=self.server_hostname, port=self.tcp_port, ip=self.server_ip))
             self.socket.bind((self.server_ip, self.tcp_port))
             if verbose: print("Conexion opened.")

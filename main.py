@@ -10,7 +10,7 @@ from VisionEngine.MobileFaceNet import MobileFaceNet
 from RobotController.ReinforcementLearningController.Validator import Validator
 from Constants import DEFAULT_PERSON_TO_FOLLOW
 from RobotController.AddOnControllers.MotorController import MotorController
-from RobotController.RLConstants import MOVEMENT_TIME, HALF_MODE, ONE_THIRD_MODE
+from RobotController.RLConstants import MOVEMENT_TIME, HALF_MODE, ONE_THIRD_MODE, SYNC_MODE
 from RobotController.ClientServer.Socket import Socket
 from RobotController.ClientServer.ServerPipeline import ServerPipeline, SAVE_FILE_CODE
 from RobotController.ClientServer.ClientPipeline import ClientPipeline

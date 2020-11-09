@@ -15,6 +15,7 @@ try:
             def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE//3, FRAME_RATE),
                          shutter_speed = DEFAULT_PICAMERA_SHUTTER_SPEED, iso = DEFAULT_PICAMERA_ISO):
                 super().__init__(resolution=resolution, framerate_range=framerate_range)
+                self.exposure_mode = 'sports'
                 if shutter_speed != 0:
                     self.shutter_speed = shutter_speed
                     self.iso = iso
