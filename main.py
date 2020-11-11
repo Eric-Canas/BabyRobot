@@ -19,7 +19,7 @@ import sys
 
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY", "SERVER")
 execution_mode = "TRAIN_MOVEMENT"
-movement_mode = ONE_THIRD_MODE
+movement_mode = SYNC_MODE
 execute_on_server = True
 teleoperated_exploration = True
 

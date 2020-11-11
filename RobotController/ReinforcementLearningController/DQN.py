@@ -1,6 +1,6 @@
 from random import random, randrange
 from torch import load, save, FloatTensor, no_grad, device
-from torch.nn import Sequential, Linear, ReLU, Module, Dropout
+from torch.nn import Sequential, Linear, ReLU, Module, Dropout, BatchNorm1d, LeakyReLU
 from torch.cuda import is_available
 from os.path import join, dirname, isdir, isfile
 from os import makedirs
@@ -15,10 +15,12 @@ class DQN(Module):
     def __init__(self, input_size, num_actions):
         super(DQN, self).__init__()
         self.network = Sequential(Linear(input_size, 256),
-                                  ReLU(inplace=True),
+                                  LeakyReLU(inplace=True),
+                                  BatchNorm1d(256),
                                   Dropout(p=0.5, inplace=False),
                                   Linear(256, 64),
-                                  ReLU(inplace=True),
+                                  LeakyReLU(inplace=True),
+                                  BatchNorm1d(64),
                                   Dropout(p=0.5, inplace=False),
                                   Linear(64, num_actions))
         self.num_actions = num_actions

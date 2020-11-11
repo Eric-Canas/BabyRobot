@@ -109,25 +109,25 @@ try:
         def rotate(self, clockwise=True, time=None):
             while self.movement_mode in [ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE] and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
-            GPIO.output(self.motor_left_clockwise, clockwise)
-            GPIO.output(self.motor_left_counterclockwise, not clockwise)
-            GPIO.output(self.motor_right_clockwise, not clockwise)
-            GPIO.output(self.motor_right_counterclockwise, clockwise)
+            GPIO.output(self.motor_left_clockwise, not clockwise)
+            GPIO.output(self.motor_left_counterclockwise, clockwise)
+            GPIO.output(self.motor_right_clockwise, clockwise)
+            GPIO.output(self.motor_right_counterclockwise, not clockwise)
             self.keep_movement(time=time)
 
         def turn(self, right=True, time=None, front=True):
             while self.movement_mode in [ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE] and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
             if right:
-                GPIO.output(self.motor_left_clockwise, front)
-                GPIO.output(self.motor_left_counterclockwise, not front)
+                GPIO.output(self.motor_left_clockwise, not front)
+                GPIO.output(self.motor_left_counterclockwise, front)
                 GPIO.output(self.motor_right_clockwise, False)
                 GPIO.output(self.motor_right_counterclockwise, False)
             else:
                 GPIO.output(self.motor_left_clockwise, False)
                 GPIO.output(self.motor_left_counterclockwise, False)
-                GPIO.output(self.motor_right_clockwise, front)
-                GPIO.output(self.motor_right_counterclockwise, not front)
+                GPIO.output(self.motor_right_clockwise, not front)
+                GPIO.output(self.motor_right_counterclockwise, front)
             self.keep_movement(time=time)
 except:
     warn("GPIO module not found. MotorController will be a Mock Object")
