@@ -25,7 +25,7 @@ class World():
         self.movement_mode = movement_mode
 
 
-    def step(self, action, time=None):
+    def step(self, action, time=MOVEMENT_TIME):
         # Execute action
         if action == IDLE:
             self.controller.idle(time=time)
@@ -45,6 +45,14 @@ class World():
             self.controller.go_left_back(time=time)
         elif action == RIGHT_BACK:
             self.controller.go_right_back(time=time)
+        elif action == HALF_LEFT_FRONT:
+            self.controller.go_left_front(time=time/2)
+        elif action == HALF_RIGHT_FRONT:
+            self.controller.go_right_front(time=time/2)
+        elif action == HALF_LEFT_BACK:
+            self.controller.go_left_back(time=time/2)
+        elif action == HALF_RIGHT_BACK:
+            self.controller.go_right_back(time=time/2)
         else:
             raise ValueError("Action {act} does not exist".format(act=action))
 

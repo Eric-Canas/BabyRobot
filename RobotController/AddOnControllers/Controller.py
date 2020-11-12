@@ -13,10 +13,10 @@ class Controller:
     """
     class __Controller:
         def __init__(self, motor_controller = None, back_ultrasound_controller = None, front_ultrasound_controller = None, camera_controller = None):
-            self.motor_controller = motor_controller if motor_controller is not None else MotorController()
             self.back_ultrasound_controller = back_ultrasound_controller if back_ultrasound_controller is not None else UltraSoundController(echo_pin=BACK_ECHO, trigger_pin=BACK_TRIGGER)
             self.front_ultrasound_controller = front_ultrasound_controller if front_ultrasound_controller is not None else UltraSoundController(echo_pin=FRONT_ECHO, trigger_pin=FRONT_TRIGGER)
             self.camera_controller = camera_controller if camera_controller is not None else CameraController()
+            self.motor_controller = motor_controller if motor_controller is not None else MotorController()
             self.capture_continuous = self.camera_controller.capture_continuous
 
     instance = None
