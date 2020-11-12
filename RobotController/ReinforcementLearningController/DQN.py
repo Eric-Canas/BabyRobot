@@ -16,11 +16,11 @@ class DQN(Module):
         super(DQN, self).__init__()
         self.network = Sequential(Linear(input_size, 256),
                                   LeakyReLU(inplace=True),
-                                  BatchNorm1d(256),
+                                  BatchNorm1d(num_features=256),
                                   Dropout(p=0.5, inplace=False),
                                   Linear(256, 64),
                                   LeakyReLU(inplace=True),
-                                  BatchNorm1d(64),
+                                  BatchNorm1d(num_features=64),
                                   Dropout(p=0.5, inplace=False),
                                   Linear(64, num_actions))
         self.num_actions = num_actions
@@ -32,10 +32,12 @@ class DQN(Module):
 
     def act(self, state, epsilon=0.):
         if random() > epsilon:
+            self.eval()
             with no_grad():
                 state = FloatTensor(state).to(device=dev)
-                q_value = self.forward(state)
+                q_value = self.network(state[None,:])[0]
                 action = q_value.argmax().item()
+            self.train()
         else:
             action = randrange(self.num_actions)
         return action
