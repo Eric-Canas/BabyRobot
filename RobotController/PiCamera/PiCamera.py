@@ -73,6 +73,7 @@ except:
         def capture(self):
             person_dir = os.path.join(FULL_PHOTOS_DATA_DIR, choice(os.listdir(FULL_PHOTOS_DATA_DIR)))
             image = read_image(height=self.resolution[0], width= self.resolution[1],person_dir=person_dir, image_name=choice(os.listdir(person_dir)))
+            image = cv2.resize(image,(300,300))
             return image
 
 

@@ -23,6 +23,7 @@ class World():
         self.recognition_pipeline = recognition_pipeline if recognition_pipeline is not None else RecognitionPipeline()
         self.average_info_from_n_images = average_info_from_n_images
         self.movement_mode = movement_mode
+        self.last_image = self.controller.capture_image()
 
 
     def step(self, action, time=MOVEMENT_TIME):
@@ -58,13 +59,14 @@ class World():
 
         # Discover new state
         new_state = np.empty(shape=len(STATES_ORDER), dtype=np.float32)
+        image = self.controller.capture_image()
         if self.objective_person is not None:
-            distances = [self.recognition_pipeline.get_distance_to_faces(image=self.controller.capture_image(), y_offset=self.distance_to_maintain)
+            distances = [self.recognition_pipeline.get_distance_to_faces(image=image, y_offset=self.distance_to_maintain)
                             for _ in range(self.average_info_from_n_images)]
             distances_to_person = [results[self.objective_person] for results in distances
                                         if self.objective_person in results]
         else:
-            distances = [self.recognition_pipeline.get_distance_without_identities(image=self.controller.capture_image(),
+            distances = [self.recognition_pipeline.get_distance_without_identities(image=image,
                                                                          y_offset=self.distance_to_maintain)
                                                                 for _ in range(self.average_info_from_n_images)]
             distances_to_person = [results for results in distances if len(results) > 0]
@@ -76,7 +78,7 @@ class World():
             new_state[ARE_X_Y_VALID_POS] = 1.
         else:
             new_state[:ARE_X_Y_VALID_POS + 1] = (0., 0., 0.)
-
+        new_state[IMAGE_DIFFERENCE_POS] = np.mean(abs(image-self.last_image))
         # TODO: Solve the problem with the sensor
         new_state[BACK_DISTANCE_POS] = self.controller.get_back_distance(distance_offset=self.wall_security_distance)
         new_state[FRONT_DISTANCE_POS] = self.controller.get_front_distance(distance_offset=self.wall_security_distance)
@@ -90,7 +92,7 @@ class World():
         self.recognition_pipeline.show_recognitions(image=image)
 
 def get_state_reward(state):
-    y_dist, x_dist, are_x_y_valid, back_distance, front_distance = state
+    y_dist, x_dist, are_x_y_valid, image_difference, back_distance, front_distance = state
 
     if not np.isclose(are_x_y_valid, 0.):
         if y_dist < 0:
