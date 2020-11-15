@@ -208,7 +208,7 @@ class Trainer:
         for episode in range(1, train_episodes+1):
             episode_reward = 0
             actions_taken = []
-            current_epsilon = self.epsilon_by_step(step=len(self.losses)+1)
+            current_epsilon = self.epsilon_by_step(step=episode)
             episode_losses = []
             for step in range(1, steps_per_episode+1):
 
