@@ -11,7 +11,7 @@ from warnings import warn
 from os.path import join, isfile, isdir
 from os import makedirs, listdir
 from Constants import DECIMALS
-from RobotController.RLConstants import INPUT_LAST_ACTIONS, PLAY_SESSION_TIME_IN_SECONDS, ACTIONS_TELEOPERATED_KEYPAD_DEFINITON
+from RobotController.RLConstants import INPUT_LAST_ACTIONS, PLAY_SESSION_TIME_IN_SECONDS, ACTIONS_TELEOPERATED_KEYPAD_DEFINITON, ROTATION_ADVANCE_BY_ACTION
 import numpy as np
 from matplotlib import pyplot as plt
 from time import time
@@ -37,7 +37,7 @@ class Trainer:
         :param buffer_size: int. Size of the replay states
         :param batch_size: int. Size of the Batch
         """
-        self.input_size = (input_size*input_last_actions)+(action_size*(input_last_actions-1))
+        self.input_size = input_size+len(ROTATION_ADVANCE_BY_ACTION[-1])#(input_size*input_last_actions)+(action_size*(input_last_actions-1))
         self.input_buffer = InputQueue(capacity=input_last_actions, action_size = action_size)
         self.input_last_actions = input_last_actions
         self.buffer_size = buffer_size
@@ -164,7 +164,8 @@ class Trainer:
         :return:
         Epsilon for the frame frame_idx
         """
-        return epsilon_final + (epsilon_start - epsilon_final) * exp(-1. * step / epsilon_decay)
+        # epsilon_final + (epsilon_start - epsilon_final) * exp(-1. * step / epsilon_decay) # Very hard decay
+        return max(epsilon_start*epsilon_decay**step, epsilon_final)
 
     def train(self, train_episodes = TRAIN_STEPS, steps_per_episode = STEPS_PER_EPISODE,
               DQN_update_ratio = DQN_UPDATE_RATIO, show=False, episodes_between_saving = None):

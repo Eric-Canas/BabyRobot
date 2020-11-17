@@ -1,6 +1,6 @@
 from collections import deque
 import numpy as np
-from RobotController.RLConstants import INPUT_LAST_ACTIONS, ACTIONS_DEFINITION
+from RobotController.RLConstants import INPUT_LAST_ACTIONS, ACTIONS_DEFINITION, ROTATION_ADVANCE_BY_ACTION
 
 
 class InputQueue:
@@ -11,13 +11,12 @@ class InputQueue:
 
     def push_state(self, state):
         self.states.append(state)
+
     def push_action(self, action):
         self.actions.append(action)
 
     def get_composed_state(self):
-        # State is composed by the previous states concatenated with a concatenation of the previous actions hot-encoded
-        return np.concatenate((np.array(self.states).flatten(),
-                               np.eye(N=self.action_size, dtype=np.float32)[self.actions].flatten()))
+        return np.stack([np.concatenate([state, ROTATION_ADVANCE_BY_ACTION[action]]) for state, action in zip(self.states, list(self.actions)+[-1])])
 
     def __len__(self):
         return len(self.states)
