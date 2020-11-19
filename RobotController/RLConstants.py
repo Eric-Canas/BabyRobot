@@ -17,9 +17,9 @@ ACTIONS_TELEOPERATED_KEYPAD_DEFINITON = {5 : IDLE, 8 : FORWARD, 2 : BACK, 4 : CO
 
 # (Degrees rotated: 1 max (45º), 0 No movement (0º), -1 min (-45º), Advance: 1 front, 0 no movement, -1 back)
 ROTATION_ADVANCE_BY_ACTION = {IDLE: (0.,0.), FORWARD: (0., 1.), BACK: (0.,-1.), COUNTER_CLOCKWISE: (-1,0.), CLOCKWISE: (1, 0),
-                              RIGHT_FRONT: (0.5, 0.5), LEFT_FRONT: (-0.5, 0.5), RIGHT_BACK: (0.5, -0.5), LEFT_BACK: (-0.5,-0.5),
-                              HALF_RIGHT_FRONT: (0.5/2, 0.5/2), HALF_LEFT_FRONT: (-0.5/2, 0.5/2), HALF_RIGHT_BACK: (0.5/2, -0.5/2),
-                              HALF_LEFT_BACK: (-0.5/2,-0.5/2),
+                              RIGHT_FRONT: (0.5, 0.25), LEFT_FRONT: (-0.5, 0.25), RIGHT_BACK: (0.5, -0.25), LEFT_BACK: (-0.5,-0.25),
+                              HALF_RIGHT_FRONT: (0.5/2, 0.25/2), HALF_LEFT_FRONT: (-0.5/2, 0.25/2), HALF_RIGHT_BACK: (0.5/2, -0.25/2),
+                              HALF_LEFT_BACK: (-0.5/2,-0.25/2),
                               -1 : (0., 0.)}
 
 X_DIST_POS, Y_DIST_POS, ARE_X_Y_VALID_POS, IMAGE_DIFFERENCE_POS, BACK_DISTANCE_POS, FRONT_DISTANCE_POS = 0, 1, 2, 3, 4, 5

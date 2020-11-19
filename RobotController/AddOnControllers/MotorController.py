@@ -116,19 +116,13 @@ try:
             GPIO.output(self.motor_right_counterclockwise, not clockwise)
             self.keep_movement(time=time)
 
-        def turn(self, right=True, time=None, front=True):
+        def turn(self, right=True, front=True, time=None):
             while self.movement_mode in [ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE] and len(self.scheduler.get_jobs()) != 0: pass
             time = time if time is not None else self.default_movement_time
-            if right:
-                GPIO.output(self.motor_left_clockwise, not front)
-                GPIO.output(self.motor_left_counterclockwise, front)
-                GPIO.output(self.motor_right_clockwise, False)
-                GPIO.output(self.motor_right_counterclockwise, False)
-            else:
-                GPIO.output(self.motor_left_clockwise, False)
-                GPIO.output(self.motor_left_counterclockwise, False)
-                GPIO.output(self.motor_right_clockwise, not front)
-                GPIO.output(self.motor_right_counterclockwise, front)
+            GPIO.output(self.motor_left_clockwise, front and not right)
+            GPIO.output(self.motor_left_counterclockwise, not front and right)
+            GPIO.output(self.motor_right_clockwise, front and right)
+            GPIO.output(self.motor_right_counterclockwise, not front and not right)
             self.keep_movement(time=time)
 except:
     warn("GPIO module not found. MotorController will be a Mock Object")
