@@ -18,7 +18,7 @@ from RobotController.ClientServer.ClientPipeline import ClientPipeline
 import sys
 
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY", "SERVER")
-execution_mode = "TRAIN_MOVEMENT"
+execution_mode = "SERVER"
 movement_mode = SYNC_MODE
 execute_on_server = True
 teleoperated_exploration = True

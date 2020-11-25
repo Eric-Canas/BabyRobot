@@ -228,6 +228,7 @@ class Trainer:
                 composed_next_state = self.input_buffer.get_composed_state()
                 # Save the action at the replay states
                 improved_reward = self.promote_improvement(reward=reward, last_reward=last_reward)
+                #if improved_reward >= MAX_REWARD_BY_PARAM*WALL_DISTANCE_INFLUENCE and random()>SAVE_NON_REWARDED_STATE_PROB:
                 self.replay_buffer.push(composed_state, action, improved_reward, composed_next_state)
                 # Update the current state and the actual episode reward
                 composed_state = composed_next_state

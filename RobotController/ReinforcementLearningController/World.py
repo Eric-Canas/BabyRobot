@@ -7,7 +7,7 @@ import numpy as np
 
 
 class World():
-    def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_M, wall_security_distance_in_cm = WALL_SECURITY_DISTANCE_IN_M,
+    def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_CM, wall_security_distance_in_cm = WALL_SECURITY_DISTANCE_IN_M,
                  controller = None, recognition_pipeline = None, average_info_from_n_images = 1, movement_mode=DEFAULT_MOVEMENT_MODE):
         if objective_person in KNOWN_NAMES:
             self.objective_person = objective_person
@@ -93,7 +93,7 @@ class World():
 
 def get_state_reward(state):
     y_dist, x_dist, are_x_y_valid, image_difference, back_distance, front_distance = state
-
+    # Measure to meters
     if not np.isclose(are_x_y_valid, 0.):
         if y_dist < 0:
             y_dist_reward = map_reward(y_dist, in_min=MAX_ALLOWED_Y_DIST_NEAR, in_max=0.)
@@ -109,7 +109,7 @@ def get_state_reward(state):
     # Remember that in this case, less or equal than 0 is dangerous threshold surpassed
     wall_distance_reward = map_reward(back_distance, in_min=0., in_max=DANGEROUS_WALL_DISTANCE - WALL_SECURITY_DISTANCE_IN_M) \
                            + map_reward(front_distance, in_min=0., in_max=DANGEROUS_WALL_DISTANCE - WALL_SECURITY_DISTANCE_IN_M)
-    wall_distance_reward *= WALL_DISTANCE_INFLUENCE
+    wall_distance_reward *= WALL_DISTANCE_INFLUENCE/2
 
     return dist_to_person_reward+wall_distance_reward
 
