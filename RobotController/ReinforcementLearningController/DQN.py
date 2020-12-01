@@ -1,6 +1,7 @@
 from random import random, randrange
 from torch import load, save, FloatTensor, no_grad, device, zeros
 from torch.nn import Sequential, Linear, ReLU, Module, Dropout, BatchNorm1d, LeakyReLU, LSTM
+from torch import exp, sum, multinomial, max
 from torch.cuda import is_available
 from os.path import join, dirname, isdir, isfile
 from os import makedirs
@@ -12,7 +13,7 @@ dev = device('cuda') if is_available() else device('cpu')
 print("Working on: {dev}".format(dev=dev))
 
 class DQN(Module):
-    def __init__(self, input_size, num_actions, lstm_hidden_size = 64, lstm_layers = 1):
+    def __init__(self, input_size, num_actions, lstm_hidden_size = 64, lstm_layers = 1, get_action_by_boltzmann = True):
         super(DQN, self).__init__()
         # Linear Based
 
@@ -32,6 +33,7 @@ class DQN(Module):
 
         self.num_actions = num_actions
         self.input_size = input_size
+        self.get_action_by_boltzmann = get_action_by_boltzmann
         self.to(device=dev)
 
     def forward(self, x):
@@ -42,15 +44,17 @@ class DQN(Module):
         return self.network(x[:, -1, ...])
 
     def act(self, state, epsilon=0.):
-        if random() > epsilon:
-            self.eval()
-            with no_grad():
-                state = FloatTensor(state).to(device=dev)
-                q_value = self.forward(state[None,:])[0]
+        self.eval()
+        with no_grad():
+            state = FloatTensor(state).to(device=dev)
+            q_value = self.forward(state[None,:])[0]
+            if self.get_action_by_boltzmann:
+                q_value = exp((q_value - max(q_value))*(1-epsilon))
+                softmax_probs = q_value / sum(q_value)
+                action = multinomial(softmax_probs, num_samples=1).item()
+            else:
                 action = q_value.argmax().item()
-            self.train()
-        else:
-            action = randrange(self.num_actions)
+        self.train()
         return action
 
     def save(self, path=join(RL_CONTROLLER_DIR, RL_CONTROLLER_PTH_FILE)):

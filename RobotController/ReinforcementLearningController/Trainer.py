@@ -1,11 +1,11 @@
-from math import sqrt, pi, exp
+from math import sqrt, pi
 from RobotController.ReinforcementLearningController.DQN import DQN, dev
 from RobotController.ReinforcementLearningController.World import World
 from pickle import dump, load
 from RobotController.ReinforcementLearningController.ReplayBuffer import ReplayBuffer
 from torch import LongTensor, FloatTensor
 from torch.nn.functional import smooth_l1_loss
-from torch.optim import Adam
+from torch.optim import Adam, RMSprop
 from RobotController.RLConstants import *
 from warnings import warn
 from os.path import join, isfile, isdir
@@ -20,6 +20,7 @@ from RobotController.ClientServer.ClientPipeline import ClientPipeline
 from collections import deque
 from random import random, randrange
 from Utilities.GetKey import get_key
+import torch
 PLOT_EVERY = 100
 
 
@@ -49,7 +50,7 @@ class Trainer:
         self.target_model = DQN(input_size=self.input_size, num_actions=action_size)
 
         # Initialize the Adam optimizer and the replay states
-        self.optimizer = Adam(filter(lambda p: p.requires_grad, self.current_model.parameters()),lr=DQN_lr)
+        self.optimizer = RMSprop(filter(lambda p: p.requires_grad, self.current_model.parameters()),lr=DQN_lr)
 
         # Make both networks start with the same weights
         self.update_target()
@@ -69,6 +70,8 @@ class Trainer:
         self.charge_data_from = charge_data_from
         self.verbose = verbose
         self.step_time = deque(maxlen=EPISODES_BETWEEN_SAVING*3)
+        self.buffer_influence = torch.exp((torch.arange(float(input_last_actions))/float(input_last_actions)).float())
+        self.buffer_influence = self.buffer_influence / torch.sum(self.buffer_influence)
         if self.charge_data_from is None:
             self.losses, self.all_rewards = [], []
         else:
@@ -86,7 +89,7 @@ class Trainer:
 
     def get_action(self, state, epsilon = 0.):
         if random() > epsilon:
-            action = self.current_model.act(state)
+            action = self.current_model.act(state, epsilon=epsilon+EPSILON_FINAL)
         else:
             if self.tele_operate_exploration:
                 action = self.request_for_action()
@@ -228,6 +231,7 @@ class Trainer:
                 composed_next_state = self.input_buffer.get_composed_state()
                 # Save the action at the replay states
                 improved_reward = self.promote_improvement(reward=reward, last_reward=last_reward)
+                improved_reward += self.additional_maintaing_score(composed_next_state)
                 #if improved_reward >= MAX_REWARD_BY_PARAM*WALL_DISTANCE_INFLUENCE and random()>SAVE_NON_REWARDED_STATE_PROB:
                 self.replay_buffer.push(composed_state, action, improved_reward, composed_next_state)
                 # Update the current state and the actual episode reward
@@ -265,6 +269,9 @@ class Trainer:
                 self.save()
                 if self.verbose: print("Training time finished. Execute again for resuming the train")
                 return None
+
+    def additional_maintaing_score(self,composed_state):
+        return torch.sum((self.buffer_influence * composed_state[:, ARE_X_Y_VALID_POS])* MAINTAIN_PERSON_BONUS).item()
 
     def save(self):
         self.current_model.save()

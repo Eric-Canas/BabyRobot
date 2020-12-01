@@ -78,7 +78,7 @@ class World():
             new_state[ARE_X_Y_VALID_POS] = 1.
         else:
             new_state[:ARE_X_Y_VALID_POS + 1] = (0., 0., 0.)
-        new_state[IMAGE_DIFFERENCE_POS] = np.mean(abs(image-self.last_image))
+        new_state[IMAGE_DIFFERENCE_POS] = np.mean(abs(image-self.last_image))/255
         # TODO: Solve the problem with the sensor
         new_state[BACK_DISTANCE_POS] = self.controller.get_back_distance(distance_offset=self.wall_security_distance)
         new_state[FRONT_DISTANCE_POS] = self.controller.get_front_distance(distance_offset=self.wall_security_distance)
