@@ -89,7 +89,7 @@ class Trainer:
 
     def get_action(self, state, epsilon = 0.):
         if random() > epsilon:
-            action = self.current_model.act(state, epsilon=epsilon+EPSILON_FINAL)
+            action = self.current_model.act(state, epsilon=epsilon-EPSILON_FINAL)
         else:
             if self.tele_operate_exploration:
                 action = self.request_for_action()

@@ -85,10 +85,10 @@ try:
                 raise ValueError("Mode {mode} does not exist".format(mode=self.movement_mode))
 
         def stop(self):
-            GPIO.output(self.motor_left_clockwise, False)
-            GPIO.output(self.motor_left_counterclockwise, False)
             GPIO.output(self.motor_right_clockwise, False)
+            GPIO.output(self.motor_left_clockwise, False)
             GPIO.output(self.motor_right_counterclockwise, False)
+            GPIO.output(self.motor_left_counterclockwise, False)
 
         def idle(self, time=None):
             while self.movement_mode in [ASYNC_MODE, HALF_MODE, ONE_THIRD_MODE] and len(self.scheduler.get_jobs()) != 0: pass
