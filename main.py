@@ -20,7 +20,7 @@ import sys
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY", "SERVER")
 execution_mode = "TRAIN_MOVEMENT"
 movement_mode = SYNC_MODE
-execute_on_server = True
+execute_on_server = False
 teleoperated_exploration = True
 
 if execution_mode.upper() == "CAPTURE_NEW_DATASET":
