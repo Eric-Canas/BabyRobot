@@ -1,11 +1,11 @@
 from collections import deque
 from numpy import array, float32
 from random import sample
-from RobotController.RLConstants import DQN_REPLAY_BUFFER_CAPACITY, DQN_BATCH_SIZE
+from RobotController.RLConstants import DQN_REPLAY_BUFFER_CAPACITY, DQN_BATCH_SIZE, USUAL_CASE_USE_PROB
 import numpy as np
 
 class ReplayBuffer:
-    def __init__(self, capacity = DQN_REPLAY_BUFFER_CAPACITY, usual_case_probability = 0.01):
+    def __init__(self, capacity = DQN_REPLAY_BUFFER_CAPACITY, usual_case_probability = USUAL_CASE_USE_PROB):
         self.buffer = deque(maxlen=capacity)
         self.capacity = capacity
         self.usual_case_probability = usual_case_probability
