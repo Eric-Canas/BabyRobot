@@ -70,3 +70,6 @@ PLAY_SESSION_TIME_IN_SECONDS = 9*60*60
 MOVEMENT_TIME = 0.6 # Aproximately the time for which rotation is of 90 degrees and turn is of 45 degrees
 REQUEST_FOR_ACTION_TIMEOUT = 1
 SAVE_NON_REWARDED_STATE_PROB = 0.05
+
+DIST_EPSILON = 20
+CATCHING_ATTENTION_PROB = 0.1

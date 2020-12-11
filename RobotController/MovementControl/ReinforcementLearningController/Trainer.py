@@ -1,11 +1,11 @@
 from math import sqrt, pi
-from RobotController.ReinforcementLearningController.DQN import DQN, dev
-from RobotController.ReinforcementLearningController.World import World
+from RobotController.MovementControl.ReinforcementLearningController.DQN import DQN, dev
+from RobotController.MovementControl.DQNWorld import World
 from pickle import dump, load
-from RobotController.ReinforcementLearningController.ReplayBuffer import ReplayBuffer
+from RobotController.MovementControl.ReinforcementLearningController.ReplayBuffer import ReplayBuffer
 from torch import LongTensor, FloatTensor
 from torch.nn.functional import smooth_l1_loss
-from torch.optim import Adam, RMSprop
+from torch.optim import RMSprop
 from RobotController.RLConstants import *
 from warnings import warn
 from os.path import join, isfile, isdir
@@ -15,7 +15,7 @@ from RobotController.RLConstants import INPUT_LAST_ACTIONS, PLAY_SESSION_TIME_IN
 import numpy as np
 from matplotlib import pyplot as plt
 from time import time
-from RobotController.ReinforcementLearningController.InputQueue import InputQueue
+from RobotController.MovementControl.ReinforcementLearningController.InputQueue import InputQueue
 from RobotController.ClientServer.ClientPipeline import ClientPipeline
 from collections import deque
 from random import random, randrange

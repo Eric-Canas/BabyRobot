@@ -1,5 +1,5 @@
-from RobotController.ReinforcementLearningController.DQN import DQN
-from RobotController.ReinforcementLearningController.World import World
+from RobotController.MovementControl.ReinforcementLearningController.DQN import DQN
+from RobotController.MovementControl.DQNWorld import World
 from torch import no_grad
 from RobotController.RLConstants import *
 from os.path import join
