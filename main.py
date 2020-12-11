@@ -60,7 +60,7 @@ elif execution_mode.upper() == "TRAIN_MOVEMENT":
 elif execution_mode.upper() == "PLAY":
     person_to_follow = None#DEFAULT_PERSON_TO_FOLLOW
     showing = True
-    pipeline = RecognitionPipeline()
+    pipeline = RecognitionPipeline() if not execute_on_server else ClientPipeline(socket=Socket(client=True, ip=ip))
     controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, movement_mode=movement_mode))
     if controller == 'DQN':
         env = World(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,

@@ -15,11 +15,10 @@ LEFT, RIGHT = -1, 1
 
 class FiniteStateMachine:
     def __init__(self, controller=None, movement_mode=DEFAULT_MOVEMENT_MODE, dist_epsilon=DIST_EPSILON,
-                 catching_attention_prob=CATCHING_ATTENTION_PROB, warning_obstacle = DANGEROUS_WALL_DISTANCE):
+                 catching_attention_prob=CATCHING_ATTENTION_PROB):
         self.state = SEARCHING
         self.dist_epsilon = dist_epsilon
         self.catching_attention_prob = catching_attention_prob
-        self.warning_obstacle = warning_obstacle
         self.controller = controller if controller is not None else Controller(motor_controller=MotorController(movement_mode=movement_mode))
         self.last_search_direction = None
 
@@ -30,7 +29,7 @@ class FiniteStateMachine:
 
         # ----------- TRANSITIONS SUMMARIZED ------------
         # OBSTACLE APPEARED
-        if back_distance < self.warning_obstacle or front_distance < self.warning_obstacle:
+        if back_distance < 0 or front_distance < 0:
             self.state = AVOIDING_OBSTACLE
         # LOST TARGET TRANSITION
         elif not are_x_y_valid:
@@ -46,7 +45,7 @@ class FiniteStateMachine:
                 self.state = self.get_best_innacurate_state(x_dev=x_deviation, y_dev=y_deviation)
 
         if verbose:
-            print(STATES[self.state])
+            print('STATE: {state}'.format(state=STATES[self.state]))
 
         # ----------------- ACTIONS ------------------
         if self.state == APPROACHING:
