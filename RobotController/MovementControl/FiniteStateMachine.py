@@ -15,12 +15,13 @@ LEFT, RIGHT = -1, 1
 
 class FiniteStateMachine:
     def __init__(self, controller=None, movement_mode=DEFAULT_MOVEMENT_MODE, dist_epsilon=DIST_EPSILON,
-                 catching_attention_prob=CATCHING_ATTENTION_PROB):
+                 catching_attention_prob=CATCHING_ATTENTION_PROB, ensure_lose_images=ENSURE_LOSE_IMAGES):
         self.state = SEARCHING
         self.dist_epsilon = dist_epsilon
         self.catching_attention_prob = catching_attention_prob
         self.controller = controller if controller is not None else Controller(motor_controller=MotorController(movement_mode=movement_mode))
         self.last_search_direction = None
+        self.ensure_lose_images = ensure_lose_images
 
     def act(self, state, verbose = True):
         x_dist, y_dist, are_x_y_valid, back_distance, front_distance = state[X_DIST_POS], state[Y_DIST_POS], state[ARE_X_Y_VALID_POS], state[BACK_DISTANCE_POS], state[FRONT_DISTANCE_POS]
@@ -41,6 +42,9 @@ class FiniteStateMachine:
             if self.state != SEARCHING:
                 # TODO: Improve the strategy by taking into account the last place where target was seen
                 self.last_search_direction = choice((LEFT, RIGHT))
+                self.consecutive_losed_images = 0
+
+            self.consecutive_losed_images += 1
             self.state = SEARCHING
         # RELOCATION
         else:
@@ -69,7 +73,8 @@ class FiniteStateMachine:
             self.catch_attention()
 
         elif self.state == SEARCHING:
-            self.search()
+            if self.consecutive_losed_images > self.ensure_lose_images:
+                self.search()
 
         elif self.state == AVOIDING_OBSTACLE:
             self.avoid_obstacle(back_distance=back_distance, front_distance=front_distance)
@@ -77,7 +82,7 @@ class FiniteStateMachine:
     def location_deviation(self, dist):
         if -self.dist_epsilon < dist < self.dist_epsilon:
             return 0
-        elif dist < dist-self.dist_epsilon:
+        elif dist < -self.dist_epsilon:
             return -1
         else:
             return 1
