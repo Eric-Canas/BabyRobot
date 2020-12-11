@@ -26,6 +26,8 @@ movement_mode = SYNC_MODE
 execute_on_server = True
 teleoperated_exploration = True
 
+ip = sys.argv[1] if len(sys.argv) > 1 and execute_on_server else None
+
 
 if execution_mode.upper() == "CAPTURE_NEW_DATASET":
     # Start to capture images until "q" is clicked
@@ -44,8 +46,6 @@ elif execution_mode.upper() == "SHOW_DETECTIONS_DEMO":
             pipeline.show_recognitions(image=frame)
 
 elif execution_mode.upper() == "TRAIN_MOVEMENT":
-
-    ip = sys.argv[1] if len(sys.argv) > 1 and execute_on_server else None
 
     # Train following only one person (without recognition) for improving the training velocity in a 70%
     person_to_follow = None#DEFAULT_PERSON_TO_FOLLOW
