@@ -5,6 +5,8 @@ from RobotController.AddOnControllers.Controller import Controller
 from RobotController.AddOnControllers.MotorController import MotorController
 
 APPROACHING, ESCAPING, TURNING, CENTERED, CATCHING_ATTENTION, SEARCHING, AVOIDING_OBSTACLE = 1, 2, 3, 4, 5, 6, 7
+STATES = {APPROACHING : 'Approaching', ESCAPING: 'Escaping', TURNING: 'Turning', CENTERED: 'Centered',
+          CATCHING_ATTENTION:'Catching Attention', SEARCHING: 'Searching', AVOIDING_OBSTACLE : 'Avoiding Obstacle'}
 
 INACCURATE_LOCATION_GROUP = {APPROACHING, ESCAPING, TURNING}
 ACCURATE_LOCATION_GROUP = {CENTERED, CATCHING_ATTENTION}
@@ -21,7 +23,7 @@ class FiniteStateMachine:
         self.controller = controller if controller is not None else Controller(motor_controller=MotorController(movement_mode=movement_mode))
         self.last_search_direction = None
 
-    def act(self, state):
+    def act(self, state, verbose = True):
         y_dist, x_dist, are_x_y_valid, image_difference, back_distance, front_distance = state
         are_x_y_valid = not np.isclose(are_x_y_valid, 0)
         x_deviation, y_deviation = self.location_deviation(dist=x_dist), self.location_deviation(dist=y_dist)
@@ -43,6 +45,8 @@ class FiniteStateMachine:
             else:
                 self.state = self.get_best_innacurate_state(x_dev=x_deviation, y_dev=y_deviation)
 
+        if verbose:
+            print(STATES[self.state])
 
         # ----------------- ACTIONS ------------------
         if self.state == APPROACHING:
