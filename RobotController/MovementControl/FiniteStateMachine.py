@@ -23,10 +23,15 @@ class FiniteStateMachine:
         self.last_search_direction = None
 
     def act(self, state, verbose = True):
-        y_dist, x_dist, are_x_y_valid, image_difference, back_distance, front_distance = state
+        x_dist, y_dist, are_x_y_valid, back_distance, front_distance = state[X_DIST_POS], state[Y_DIST_POS], state[ARE_X_Y_VALID_POS], state[BACK_DISTANCE_POS], state[FRONT_DISTANCE_POS]
         are_x_y_valid = not np.isclose(are_x_y_valid, 0)
         x_deviation, y_deviation = self.location_deviation(dist=x_dist), self.location_deviation(dist=y_dist)
-
+        if verbose:
+            print("X: {x_dist}, Y: {y_dist} \n "
+                  "X DEV: {x_dev}, Y DEV: {y_dev} \n"
+                  "BACK OBSTACLE:{back}, FRONT OBSTACLE: {front}".format(x_dist=x_dist, y_dist=y_dist,
+                                                                         x_dev=x_deviation, y_dev=y_deviation,
+                                                                         back=back_distance, front=front_distance))
         # ----------- TRANSITIONS SUMMARIZED ------------
         # OBSTACLE APPEARED
         if back_distance < 0 or front_distance < 0:
@@ -70,7 +75,7 @@ class FiniteStateMachine:
             self.avoid_obstacle(back_distance=back_distance, front_distance=front_distance)
 
     def location_deviation(self, dist):
-        if np.isclose(dist,0, rtol=self.dist_epsilon):
+        if -self.dist_epsilon < dist < self.dist_epsilon:
             return 0
         elif dist < dist-self.dist_epsilon:
             return -1
