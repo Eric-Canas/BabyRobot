@@ -23,7 +23,7 @@ CONTROLLERS = ('DQN', 'FINITE_STATE_MACHINE')
 controller = 'FINITE_STATE_MACHINE'
 execution_mode = "PLAY"
 movement_mode = SYNC_MODE
-execute_on_server = False
+execute_on_server = True
 teleoperated_exploration = True
 
 ip = sys.argv[1] if len(sys.argv) > 1 and execute_on_server else None

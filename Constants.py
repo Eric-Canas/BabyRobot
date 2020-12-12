@@ -36,5 +36,6 @@ RECTANGLES_THICKNESS = 3
 LETTERS_SIZE = 2
 CHARGED_WIDTH = 512
 
-FACE_HEIGHT = 15 #For the picture that we are using for training
+FACE_HEIGHT = 19 #For the picture that we are using for training
+CRAWLING_BODY_HEIGHT_IN_CM = 50
 FACE_WIDTH = 8

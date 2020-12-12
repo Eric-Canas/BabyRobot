@@ -8,6 +8,7 @@ from VisionEngine.MobileFaceNet import MobileFaceNet
 from VisionEngine.BodyDetector import BodyDetector
 from time import time
 from cv2 import cvtColor, COLOR_BGR2RGB
+from Constants import CRAWLING_BODY_HEIGHT_IN_CM
 
 class RecognitionPipeline:
     def __init__(self, face_detector = None, body_detector = None, embedding = None, classifier = None, camera_calculator = None, show_bodies = False):
@@ -127,12 +128,14 @@ class RecognitionPipeline:
 
     def get_distance_without_identities(self, image, y_offset=0., detect_body_if_face_not_found = True):
         boxes = self.face_detector.predict(image=image)
+        element_height = None
         if detect_body_if_face_not_found and len(boxes) == 0:
             boxes = self.body_detector.predict(image=image)
+            element_height = CRAWLING_BODY_HEIGHT_IN_CM
         if len(boxes):
             boxes = [box for conf, box in boxes]
             distances = self.camera_calculator.rectangleToRealWorldXY(rectangle=boxes[0], h=image.shape[0],
-                                                                      w=image.shape[1])
+                                                                      w=image.shape[1], element_height_in_cm=element_height)
             return sum_y_offset(distances=distances, y_offset=y_offset)
         else:
             return ()

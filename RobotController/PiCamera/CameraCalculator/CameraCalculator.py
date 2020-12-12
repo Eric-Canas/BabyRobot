@@ -15,17 +15,21 @@ class CameraCalculator:
 		self.sensor_aperture_in_degrees = 2 * atan(self.sensor_dimensions_in_cm[0] / (2 * self.focal_in_cm))
 		self.cos_of_half_aperture = cos(radians(self.sensor_aperture_in_degrees / 2.0))
 
-	def rectangleToRealWorldXY(self,rectangle, h, w):
-		y = self.getDistance(rectangle=rectangle, h=h)
+	def rectangleToRealWorldXY(self, rectangle, h, w, element_height_in_cm = None):
+		if element_height_in_cm is None:
+			element_height_in_cm = self.element_height_in_cm
+		y = self.getDistance(rectangle=rectangle, h=h, element_height_in_cm=element_height_in_cm)
 		x = self.getXPos(rectangle=rectangle, w=w, distance=y)
 		return (x,y)
 
-	def getDistance(self, rectangle, h):
+	def getDistance(self, rectangle, h, element_height_in_cm = None):
+		if element_height_in_cm is None:
+			element_height_in_cm = self.element_height_in_cm
 		(x1, y1, x2, y2) = rectangle
 		percent_of_image_occuped = (max(y1,y2)-min(y1,y2)) / h
 		cm_of_sensor_occuped = self.sensor_dimensions_in_cm[0] * percent_of_image_occuped
 		division_of_triangles = self.focal_in_cm / cm_of_sensor_occuped
-		distance_to_objective = division_of_triangles*self.element_height_in_cm
+		distance_to_objective = division_of_triangles * element_height_in_cm
 		return distance_to_objective
 
 	def getXPos(self, rectangle, w, distance):
