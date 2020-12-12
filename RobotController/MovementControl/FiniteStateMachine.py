@@ -12,6 +12,7 @@ INACCURATE_LOCATION_GROUP = {APPROACHING, ESCAPING, TURNING}
 ACCURATE_LOCATION_GROUP = {CENTERED, CATCHING_ATTENTION}
 BABY_LOCATION_IS_KNOWN_GROUP = {APPROACHING, ESCAPING, TURNING, CENTERED, CATCHING_ATTENTION}
 LEFT, RIGHT = -1, 1
+NO_DEVIATION = 0
 
 class FiniteStateMachine:
     def __init__(self, controller=None, movement_mode=DEFAULT_MOVEMENT_MODE, dist_epsilon=DIST_EPSILON,
@@ -20,9 +21,10 @@ class FiniteStateMachine:
         self.dist_epsilon = dist_epsilon
         self.catching_attention_prob = catching_attention_prob
         self.controller = controller if controller is not None else Controller(motor_controller=MotorController(movement_mode=movement_mode))
-        self.last_search_direction = None
+        self.last_seen_direction = None
         self.ensure_lose_images = ensure_lose_images
         self.consecutive_losed_images = 0
+        self.last_x_deviation, self.last_y_deviation = 0, 0
 
     def act(self, state, verbose = True):
         x_dist, y_dist, are_x_y_valid, back_distance, front_distance = state[X_DIST_POS], state[Y_DIST_POS], state[ARE_X_Y_VALID_POS], state[BACK_DISTANCE_POS], state[FRONT_DISTANCE_POS]
@@ -42,7 +44,7 @@ class FiniteStateMachine:
         elif not are_x_y_valid:
             if self.state != SEARCHING:
                 # TODO: Improve the strategy by taking into account the last place where target was seen
-                self.last_search_direction = choice((LEFT, RIGHT))
+                self.last_seen_direction = self.last_x_deviation
                 self.consecutive_losed_images = 0
 
             self.consecutive_losed_images += 1
@@ -67,7 +69,7 @@ class FiniteStateMachine:
             self.controller.move_back()
 
         elif self.state == TURNING:
-            self.turn_to_x(x_dist=x_dist)
+            self.turn_to_x(x_dist=x_dist, y_dist=y_dist)
 
         elif self.state == CENTERED:
             self.controller.idle()
@@ -82,9 +84,11 @@ class FiniteStateMachine:
         elif self.state == AVOIDING_OBSTACLE:
             self.avoid_obstacle(back_distance=back_distance, front_distance=front_distance)
 
+        self.last_x_deviation = x_deviation
+
     def location_deviation(self, dist):
         if -self.dist_epsilon < dist < self.dist_epsilon:
-            return 0
+            return NO_DEVIATION
         elif dist < -self.dist_epsilon:
             return -1
         else:
@@ -98,12 +102,18 @@ class FiniteStateMachine:
         else:
             return APPROACHING
 
-    def turn_to_x(self, x_dist):
-        time = map(x=abs(x_dist), in_min=0, in_max=45, out_min=0, out_max=MOVEMENT_TIME)
-        if x_dist < 0:
-            self.controller.go_left_back(time=time)
+    def turn_to_x(self, x_dist, y_dist):
+        time = map(x=abs(x_dist), in_min=0, in_max=45, out_min=0, out_max=MOVEMENT_TIME/3)
+        if x_dist < 0.:
+            if y_dist <= 0.:
+                self.controller.go_left_back(time=time)
+            else:
+                self.controller.go_left_front(time=time)
         else:
-            self.controller.go_right_back(time=time)
+            if y_dist <= 0.:
+                self.controller.go_right_back(time=time)
+            else:
+                self.controller.go_right_front(time=time)
 
     def catch_attention(self):
         self.controller.rotate_clockwise()
@@ -112,10 +122,10 @@ class FiniteStateMachine:
         self.controller.rotate_clockwise()
 
     def search(self):
-        if self.last_search_direction == RIGHT:
-            self.controller.rotate_clockwise()
+        if self.last_seen_direction == RIGHT:
+            self.controller.rotate_clockwise(time=MOVEMENT_TIME/2)
         else:
-            self.controller.rotate_counterclockwise()
+            self.controller.rotate_counterclockwise(time=MOVEMENT_TIME/2)
 
     def avoid_obstacle(self, back_distance, front_distance):
         pass
