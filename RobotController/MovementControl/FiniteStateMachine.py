@@ -22,6 +22,7 @@ class FiniteStateMachine:
         self.controller = controller if controller is not None else Controller(motor_controller=MotorController(movement_mode=movement_mode))
         self.last_search_direction = None
         self.ensure_lose_images = ensure_lose_images
+        self.consecutive_losed_images = 0
 
     def act(self, state, verbose = True):
         x_dist, y_dist, are_x_y_valid, back_distance, front_distance = state[X_DIST_POS], state[Y_DIST_POS], state[ARE_X_Y_VALID_POS], state[BACK_DISTANCE_POS], state[FRONT_DISTANCE_POS]
@@ -45,6 +46,8 @@ class FiniteStateMachine:
                 self.consecutive_losed_images = 0
 
             self.consecutive_losed_images += 1
+            if verbose:
+                print("Losed images: {l}".format(l=self.consecutive_losed_images))
             self.state = SEARCHING
         # RELOCATION
         else:
