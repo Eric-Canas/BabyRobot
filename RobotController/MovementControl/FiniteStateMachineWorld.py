@@ -69,7 +69,7 @@ class FiniteStateMachineWorld():
         self.recognition_pipeline.show_recognitions(image=image)
 
 def get_state_reward(state):
-    y_dist, x_dist, are_x_y_valid, image_difference, back_distance, front_distance = state
+    x_dist, y_dist, are_x_y_valid, image_difference, back_distance, front_distance = state
     # Measure to meters
     if not np.isclose(are_x_y_valid, 0.):
         if y_dist < 0:

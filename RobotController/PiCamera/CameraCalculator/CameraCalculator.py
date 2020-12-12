@@ -15,11 +15,11 @@ class CameraCalculator:
 		self.sensor_aperture_in_degrees = 2 * atan(self.sensor_dimensions_in_cm[0] / (2 * self.focal_in_cm))
 		self.cos_of_half_aperture = cos(radians(self.sensor_aperture_in_degrees / 2.0))
 
-	def rectangleToRealWorldXY(self, rectangle, h, w, element_height_in_cm = None):
+	def rectangleToRealWorldXY(self, rectangle, h, w, element_height_in_cm = None, x_in_world_space = False):
 		if element_height_in_cm is None:
 			element_height_in_cm = self.element_height_in_cm
 		y = self.getDistance(rectangle=rectangle, h=h, element_height_in_cm=element_height_in_cm)
-		x = self.getXPos(rectangle=rectangle, w=w, distance=y)
+		x = self.getXPos(rectangle=rectangle, w=w, distance=(y if x_in_world_space else None))
 		return (x,y)
 
 	def getDistance(self, rectangle, h, element_height_in_cm = None):
@@ -32,24 +32,28 @@ class CameraCalculator:
 		distance_to_objective = division_of_triangles * element_height_in_cm
 		return distance_to_objective
 
-	def getXPos(self, rectangle, w, distance):
+	def getXPos(self, rectangle, w, distance=None):
 		(x1, y1, x2, y2) = rectangle
 		#Calcs the distance ideal in img, to be X=0
 		center = w / 2.0# - rectangle[Tracker.W]/2.0
 		#Calcs the real distances in img
 		real_distance_left = x1 + (max(x1,x2)-min(x1,x2)) / 2.0
 		real_distance_right = w - real_distance_left
-		#The weight of all visual camp of half image
-		real_world_half_weight_at_person = distance / self.cos_of_half_aperture
-		if real_distance_left<real_distance_right:
-			divisor_triangle = real_distance_left/center
-			distance_to_center = -real_world_half_weight_at_person * (1 - divisor_triangle)
+		if distance is not None:
+			#The weight of all visual camp of half image
+			real_world_half_weight_at_person = distance / self.cos_of_half_aperture
+			if real_distance_left<real_distance_right:
+				divisor_triangle = real_distance_left/center
+				distance_to_center = -real_world_half_weight_at_person * (1 - divisor_triangle)
 
+			else:
+				divisor_triangle = real_distance_right/center
+				distance_to_center = real_world_half_weight_at_person * (1 - divisor_triangle)
+
+			return distance_to_center
 		else:
-			divisor_triangle = real_distance_right/center
-			distance_to_center = real_world_half_weight_at_person * (1 - divisor_triangle)
-
-		return distance_to_center
+			half_point = (x1 + x2) / 2
+			return half_point - center
 
 
 

@@ -3,7 +3,7 @@ from RobotController.RLConstants import *
 import numpy as np
 from RobotController.AddOnControllers.Controller import Controller
 from RobotController.AddOnControllers.MotorController import MotorController
-
+from VisionEngine.OpenCVFaceDetector import INPUT_SIZE
 APPROACHING, ESCAPING, TURNING, CENTERED, CATCHING_ATTENTION, SEARCHING, AVOIDING_OBSTACLE = 1, 2, 3, 4, 5, 6, 7
 STATES = {APPROACHING : 'Approaching', ESCAPING: 'Escaping', TURNING: 'Turning', CENTERED: 'Centered',
           CATCHING_ATTENTION:'Catching Attention', SEARCHING: 'Searching', AVOIDING_OBSTACLE : 'Avoiding Obstacle'}
@@ -103,7 +103,7 @@ class FiniteStateMachine:
             return APPROACHING
 
     def turn_to_x(self, x_dist, y_dist):
-        time = map(x=abs(x_dist), in_min=0, in_max=45, out_min=0, out_max=MOVEMENT_TIME/3)
+        time = map(x=abs(x_dist), in_min=0, in_max=INPUT_SIZE[-1]/2, out_min=0, out_max=MOVEMENT_TIME)
         if x_dist < 0.:
             if y_dist <= 0.:
                 self.controller.go_left_back(time=time)
