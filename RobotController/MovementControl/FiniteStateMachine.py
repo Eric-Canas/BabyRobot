@@ -12,6 +12,7 @@ INACCURATE_LOCATION_GROUP = {APPROACHING, ESCAPING, TURNING}
 ACCURATE_LOCATION_GROUP = {CENTERED, CATCHING_ATTENTION}
 BABY_LOCATION_IS_KNOWN_GROUP = {APPROACHING, ESCAPING, TURNING, CENTERED, CATCHING_ATTENTION}
 LEFT, RIGHT = -1, 1
+NEAR, FAR = -1, 1
 NO_DEVIATION = 0
 
 class FiniteStateMachine:
@@ -29,7 +30,7 @@ class FiniteStateMachine:
     def act(self, state, verbose = True):
         x_dist, y_dist, are_x_y_valid, back_distance, front_distance = state[X_DIST_POS], state[Y_DIST_POS], state[ARE_X_Y_VALID_POS], state[BACK_DISTANCE_POS], state[FRONT_DISTANCE_POS]
         are_x_y_valid = not np.isclose(are_x_y_valid, 0)
-        x_deviation, y_deviation = self.location_deviation(dist=x_dist), self.location_deviation(dist=y_dist)
+        x_deviation, y_deviation = self.x_location_deviation(dist=x_dist), self.y_location_deviation(dist=y_dist)
         if verbose:
             print("X: {x_dist}, Y: {y_dist} \n "
                   "X DEV: {x_dev}, Y DEV: {y_dev} \n"
@@ -86,13 +87,22 @@ class FiniteStateMachine:
 
         self.last_x_deviation = x_deviation
 
-    def location_deviation(self, dist):
+    def x_location_deviation(self, dist):
+        if -self.dist_epsilon*2 < dist < self.dist_epsilon*2:
+            return NO_DEVIATION
+        elif dist < -self.dist_epsilon*2:
+            return LEFT
+        else:
+            return RIGHT
+
+    def y_location_deviation(self, dist):
         if -self.dist_epsilon < dist < self.dist_epsilon:
             return NO_DEVIATION
         elif dist < -self.dist_epsilon:
-            return -1
+            return NEAR
         else:
-            return 1
+            return FAR
+
 
     def get_best_innacurate_state(self, x_dev, y_dev):
         if y_dev < 0:
@@ -103,7 +113,7 @@ class FiniteStateMachine:
             return APPROACHING
 
     def turn_to_x(self, x_dist, y_dist):
-        time = map(x=abs(x_dist), in_min=0, in_max=INPUT_SIZE[-1]/2, out_min=0, out_max=MOVEMENT_TIME)
+        time = map(x=abs(x_dist), in_min=0, in_max=INPUT_SIZE[-1]/2, out_min=0, out_max=MOVEMENT_TIME/2)
         if x_dist < 0.:
             if y_dist <= 0.:
                 self.controller.go_left_back(time=time)
