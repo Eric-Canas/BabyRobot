@@ -119,7 +119,7 @@ class FiniteStateMachine:
             return APPROACHING
 
     def turn_to_x(self, x_dist, y_dist):
-        time = map(x=abs(x_dist), in_min=0, in_max=INPUT_SIZE[-1]/2, out_min=0, out_max=MOVEMENT_TIME/2)
+        time = map(x=abs(x_dist), in_min=0, in_max=INPUT_SIZE[-1]/2, out_min=0, out_max=MOVEMENT_TIME/1.75)
         if x_dist < 0.:
             if y_dist <= 0.:
                 self.controller.go_left_back(time=time)
@@ -144,7 +144,7 @@ class FiniteStateMachine:
             self.controller.rotate_counterclockwise(time=MOVEMENT_TIME/2)
 
     def avoid_obstacle(self, back_distance, front_distance):
-        escape_direction = choice(RIGHT, LEFT)
+        escape_direction = choice([RIGHT, LEFT])
         if self.consecutive_avoiding_obstacles > self.consecutive_avoiding_obstacles:
             for _ in range(4):
                 self.controller.rotate_clockwise() if escape_direction == RIGHT \
@@ -154,8 +154,7 @@ class FiniteStateMachine:
             self.controller.rotate_clockwise() if escape_direction == RIGHT \
                             else self.controller.rotate_counterclockwise()
             self.controller.move_forward()
-            self.controller.rotate_counterclockwise(MOVEMENT_TIME*0.1) if escape_direction == RIGHT \
-                            else self.controller.rotate_clockwise(MOVEMENT_TIME*0.1)
+
         elif back_distance < 0:
             self.controller.go_right_front() if escape_direction == RIGHT \
                 else self.controller.go_left_front()
@@ -163,8 +162,6 @@ class FiniteStateMachine:
                 self.controller.move_forward()
             elif self.controller.get_back_distance() < self.dist_epsilon:
                 self.controller.move_back()
-            self.controller.go_left_front() if escape_direction == RIGHT \
-                else self.controller.go_right_front()
         elif front_distance < 0:
             self.controller.go_right_back() if escape_direction == RIGHT \
                 else self.controller.go_left_back()
@@ -173,8 +170,6 @@ class FiniteStateMachine:
             elif self.controller.get_front_distance() < self.dist_epsilon:
                 self.controller.move_forward()
 
-            self.controller.go_left_back() if escape_direction == RIGHT \
-                else self.controller.go_right_back()
 
 def map(x, in_min, in_max, out_min, out_max):
   # Arduino Map
