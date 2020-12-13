@@ -17,7 +17,8 @@ NO_DEVIATION = 0
 
 class FiniteStateMachine:
     def __init__(self, controller=None, movement_mode=DEFAULT_MOVEMENT_MODE, dist_epsilon=DIST_EPSILON,
-                 catching_attention_prob=CATCHING_ATTENTION_PROB, ensure_lose_images=ENSURE_LOSE_IMAGES):
+                 catching_attention_prob=CATCHING_ATTENTION_PROB, ensure_lose_images=ENSURE_LOSE_IMAGES,
+                 consecutive_avoiding_obstacles_tries = CONSECUTIVE_AVOIDING_OBSTACLES_TRIES):
         self.state = SEARCHING
         self.dist_epsilon = dist_epsilon
         self.catching_attention_prob = catching_attention_prob
@@ -26,6 +27,8 @@ class FiniteStateMachine:
         self.ensure_lose_images = ensure_lose_images
         self.consecutive_losed_images = 0
         self.last_x_deviation, self.last_y_deviation = 0, 0
+        self.consecutive_avoiding_obstacles = 0
+        self.consecutive_avoiding_obstacles_tries = consecutive_avoiding_obstacles_tries
 
     def act(self, state, verbose = True):
         x_dist, y_dist, are_x_y_valid, back_distance, front_distance = state[X_DIST_POS], state[Y_DIST_POS], state[ARE_X_Y_VALID_POS], state[BACK_DISTANCE_POS], state[FRONT_DISTANCE_POS]
@@ -41,8 +44,10 @@ class FiniteStateMachine:
         # OBSTACLE APPEARED
         if back_distance < 0 or front_distance < 0:
             self.state = AVOIDING_OBSTACLE
+            self.consecutive_avoiding_obstacles += 1
         # LOST TARGET TRANSITION
         elif not are_x_y_valid:
+            self.consecutive_avoiding_obstacles = 0
             if self.state != SEARCHING:
                 # TODO: Improve the strategy by taking into account the last place where target was seen
                 self.last_seen_direction = self.last_x_deviation
@@ -54,6 +59,7 @@ class FiniteStateMachine:
             self.state = SEARCHING
         # RELOCATION
         else:
+            self.consecutive_avoiding_obstacles = 0
             if x_deviation == 0 and y_deviation == 0:
                 self.state = CATCHING_ATTENTION if random() <= self.catching_attention_prob else CENTERED
             else:
@@ -84,8 +90,8 @@ class FiniteStateMachine:
 
         elif self.state == AVOIDING_OBSTACLE:
             self.avoid_obstacle(back_distance=back_distance, front_distance=front_distance)
-
-        self.last_x_deviation = x_deviation
+        if are_x_y_valid:
+            self.last_x_deviation = x_deviation
 
     def x_location_deviation(self, dist):
         if -self.dist_epsilon*2 < dist < self.dist_epsilon*2:
@@ -138,7 +144,37 @@ class FiniteStateMachine:
             self.controller.rotate_counterclockwise(time=MOVEMENT_TIME/2)
 
     def avoid_obstacle(self, back_distance, front_distance):
-        pass
+        escape_direction = choice(RIGHT, LEFT)
+        if self.consecutive_avoiding_obstacles > self.consecutive_avoiding_obstacles:
+            for _ in range(4):
+                self.controller.rotate_clockwise() if escape_direction == RIGHT \
+                    else self.controller.rotate_counterclockwise()
+            self.consecutive_avoiding_obstacles = self.consecutive_avoiding_obstacles//2
+        elif back_distance < 0 and front_distance < 0:
+            self.controller.rotate_clockwise() if escape_direction == RIGHT \
+                            else self.controller.rotate_counterclockwise()
+            self.controller.move_forward()
+            self.controller.rotate_counterclockwise(MOVEMENT_TIME*0.1) if escape_direction == RIGHT \
+                            else self.controller.rotate_clockwise(MOVEMENT_TIME*0.1)
+        elif back_distance < 0:
+            self.controller.go_right_front() if escape_direction == RIGHT \
+                else self.controller.go_left_front()
+            if self.controller.get_front_distance() < 0:
+                self.controller.move_forward()
+            elif self.controller.get_back_distance() < self.dist_epsilon:
+                self.controller.move_back()
+            self.controller.go_left_front() if escape_direction == RIGHT \
+                else self.controller.go_right_front()
+        elif front_distance < 0:
+            self.controller.go_right_back() if escape_direction == RIGHT \
+                else self.controller.go_left_back()
+            if self.controller.get_back_distance() < 0:
+                self.controller.move_back()
+            elif self.controller.get_front_distance() < self.dist_epsilon:
+                self.controller.move_forward()
+
+            self.controller.go_left_back() if escape_direction == RIGHT \
+                else self.controller.go_right_back()
 
 def map(x, in_min, in_max, out_min, out_max):
   # Arduino Map
