@@ -20,11 +20,11 @@ import sys
 
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY", "SERVER")
 CONTROLLERS = ('DQN', 'FINITE_STATE_MACHINE')
-controller = 'FINITE_STATE_MACHINE'
+controller = 'DQN'
 execution_mode = "PLAY"
 movement_mode = SYNC_MODE
 execute_on_server = True
-teleoperated_exploration = True
+teleoperated_exploration = False
 
 ip = sys.argv[1] if len(sys.argv) > 1 and execute_on_server else None
 

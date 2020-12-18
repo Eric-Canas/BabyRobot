@@ -5,7 +5,8 @@ from RobotController.RLConstants import *
 from Constants import KNOWN_NAMES
 import numpy as np
 from RobotController.MovementControl.FiniteStateMachine import FiniteStateMachine
-from time import time
+from time import time as t
+from collections import deque
 
 class FiniteStateMachineWorld():
     def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_CM, wall_security_distance_in_cm = WALL_SECURITY_DISTANCE_IN_M,
@@ -25,9 +26,12 @@ class FiniteStateMachineWorld():
         self.average_info_from_n_images = average_info_from_n_images
         self.movement_mode = movement_mode
         self.finite_state_machine = finite_state_machine if finite_state_machine is not None else FiniteStateMachine(warning_obstacle=self.wall_security_distance)
+        self.last_movement_time = t()
+        self.motionless_times_detect = deque(maxlen=30)
+        self.motionless_times_no_detect = deque(maxlen=30)
 
 
-    def step(self, time=MOVEMENT_TIME, return_reward = False):
+    def step(self, time=MOVEMENT_TIME, return_reward = False, verbose=True):
         new_state = np.empty(shape=len(STATES_ORDER), dtype=np.float32)
         image = self.controller.capture_image()
         if self.objective_person is not None:
@@ -51,17 +55,30 @@ class FiniteStateMachineWorld():
 
         new_state[BACK_DISTANCE_POS] = self.controller.get_back_distance(distance_offset=self.wall_security_distance)
         new_state[FRONT_DISTANCE_POS] = self.controller.get_front_distance(distance_offset=self.wall_security_distance)
+        if verbose:
+            motionless_time = t()-self.last_movement_time
+            if len(distances_to_person) > 0:
+                self.motionless_times_detect.append(motionless_time)
+            else:
+                self.motionless_times_no_detect.append(motionless_time)
+            print("Motionless Time Detect Mean: {mean}, STD: {std}".format(mean=round(np.mean(self.motionless_times_detect), ndigits=4),
+                                                                    std=round(np.std(self.motionless_times_detect),ndigits=4)))
+            print("Motionless Time No Detect Mean: {mean}, STD: {std}".format(
+                mean=round(np.mean(self.motionless_times_no_detect), ndigits=4),
+                std=round(np.std(self.motionless_times_no_detect), ndigits=4)))
 
         self.finite_state_machine.act(state=new_state)
+        if verbose:
+            self.last_movement_time = t()
         if return_reward:
             reward = get_state_reward(state=new_state)
             return reward
 
-    def play(self, plot_reward = False):
-        start_time = time()
-        play_time = time()-start_time
+    def play(self, plot_reward = False, verbose = True):
+        start_time = t()
+        play_time = t()-start_time
         while(play_time<PLAY_SESSION_TIME_IN_SECONDS):
-            self.step()
+            self.step(verbose=verbose)
 
 
     def render(self):

@@ -2,5 +2,7 @@
 Dataset/CompletePhotos/*/*.jpg
 Dataset/CompletePhotos/*/*.jpeg
 Dataset/CompletePhotos/*/*.png
+Dataset/Faces/*/*.jpg
+Dataset/Faces/*
 __pycache__/
 *.pyc

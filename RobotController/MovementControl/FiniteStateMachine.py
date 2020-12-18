@@ -34,12 +34,6 @@ class FiniteStateMachine:
         x_dist, y_dist, are_x_y_valid, back_distance, front_distance = state[X_DIST_POS], state[Y_DIST_POS], state[ARE_X_Y_VALID_POS], state[BACK_DISTANCE_POS], state[FRONT_DISTANCE_POS]
         are_x_y_valid = not np.isclose(are_x_y_valid, 0)
         x_deviation, y_deviation = self.x_location_deviation(dist=x_dist), self.y_location_deviation(dist=y_dist)
-        if verbose:
-            print("X: {x_dist}, Y: {y_dist} \n "
-                  "X DEV: {x_dev}, Y DEV: {y_dev} \n"
-                  "BACK OBSTACLE:{back}, FRONT OBSTACLE: {front}".format(x_dist=x_dist, y_dist=y_dist,
-                                                                         x_dev=x_deviation, y_dev=y_deviation,
-                                                                         back=back_distance, front=front_distance))
         # ----------- TRANSITIONS SUMMARIZED ------------
         # OBSTACLE APPEARED
         if back_distance < 0 or front_distance < 0:

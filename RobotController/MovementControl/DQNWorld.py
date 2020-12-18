@@ -4,6 +4,8 @@ from RecognitionPipeline import RecognitionPipeline
 from RobotController.RLConstants import *
 from Constants import KNOWN_NAMES
 import numpy as np
+from time import time as t
+from collections import deque
 
 
 class World():
@@ -24,9 +26,19 @@ class World():
         self.average_info_from_n_images = average_info_from_n_images
         self.movement_mode = movement_mode
         self.last_image = self.controller.capture_image()
+        self.last_movement_time = t()
+        self.motionless_times_detect = deque(maxlen=30)
+        self.motionless_times_no_detect = deque(maxlen=30)
 
-
-    def step(self, action, time=MOVEMENT_TIME):
+    def step(self, action, time=MOVEMENT_TIME, verbose=True):
+        if verbose:
+            motionless_time = t()-self.last_movement_time
+            print("Motionless Time Detect Mean: {mean}, STD: {std}".format(
+                mean=round(np.mean(self.motionless_times_detect), ndigits=4),
+                std=round(np.std(self.motionless_times_detect), ndigits=4)))
+            print("Motionless Time No Detect Mean: {mean}, STD: {std}".format(
+                mean=round(np.mean(self.motionless_times_no_detect), ndigits=4),
+                std=round(np.std(self.motionless_times_no_detect), ndigits=4)))
         # Execute action
         if action == IDLE:
             self.controller.idle(time=time)
@@ -57,6 +69,8 @@ class World():
         else:
             raise ValueError("Action {act} does not exist".format(act=action))
 
+        if verbose:
+            self.last_movement_time = t()
         # Discover new state
         new_state = np.empty(shape=len(STATES_ORDER), dtype=np.float32)
         image = self.controller.capture_image()
@@ -71,7 +85,11 @@ class World():
                                                                 for _ in range(self.average_info_from_n_images)]
             distances_to_person = [results for results in distances if len(results) > 0]
 
-
+        if verbose:
+            if len(distances_to_person) > 0:
+                self.motionless_times_detect.append(motionless_time)
+            else:
+                self.motionless_times_no_detect.append(motionless_time)
 
         if len(distances_to_person) > 0:
             new_state[:Y_DIST_POS + 1] = np.mean(distances_to_person, axis=0)
