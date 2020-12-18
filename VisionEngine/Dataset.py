@@ -34,8 +34,11 @@ class Dataset:
                 person_dir = sub_dirs.pop(0)
                 for image_name in os.listdir(person_dir):
                     if os.path.isfile(os.path.join(person_dir, image_name)):
-                        image = read_image(height=height, width=width, person_dir=person_dir, image_name=image_name)
-                        images.append(image)
+                        try:
+                            image = read_image(height=height, width=width, person_dir=person_dir, image_name=image_name)
+                            images.append(image)
+                        except:
+                            continue
                     else:
                         sub_dirs.append(image_name)
             data[person] = images

@@ -51,7 +51,7 @@ def train_recognizer(dataset, embedder, components_reduction=128, save_at=FACE_R
 
     # Although the PCA does not any component reduction, it preprocess the features, improving the performance up to a 25%
     pipe = Pipeline(steps=[('PCA', PCA(n_components=components_reduction))
-                            ,('MLP', MLPClassifier(hidden_layer_sizes=(256,128), max_iter=10000, validation_fraction=0.01))])
+                            ,('MLP', MLPClassifier(hidden_layer_sizes=(256,128), max_iter=10000, validation_fraction=0.001))])
                            #('BinaryOutput', FunctionTransformer(np.sign))], verbose=True)
                            #('SVC', OneClassSVM(max_iter=50000))], verbose=True)
     #pipe = MLPClassifier(hidden_layer_sizes=(256,128), max_iter=10000, validation_fraction=0.01)
@@ -93,7 +93,7 @@ def save_confusion_matrix(x_train, y_train, x_val, y_val, pipeline,
         plt.yticks(range(len(ids)), labels, rotation=60)
         plt.savefig(os.path.join(save_at, set+' - Acc_{acc}.png'.format(acc=round(acc*100, ndigits=DECIMALS))))
 
-def get_train_val_splits(dataset, embedder, val_split=0.1, binary_recognition = None,
+def get_train_val_splits(dataset, embedder, val_split=0.2, binary_recognition = None,
                          data_augmentation_times=25):
     X, Y = [], []
     for _ in range(data_augmentation_times):
