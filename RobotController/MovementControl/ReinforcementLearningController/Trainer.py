@@ -253,11 +253,13 @@ class Trainer:
             # If a game is finished save the results of that game and restart the game
             if self.verbose:
                 print("-"*50+'\n'
-                      "Episode Reward: {epReward}\n"
+                      "Last Episode Reward: {epReward}\n"
+                      "Episodes Reward std: {rewStd}\n"
                       "Std of actions: {std}\n"
                       "Epsilon: {epsilon}\n"
                       "Time by Step: {timeStep} s\n"
                       "Remaining Time: {time} s\n".format(epReward=round(episode_reward, ndigits=DECIMALS),
+                                                          rewStd=round(np.std(self.all_rewards), ndigits=DECIMALS),
                                                       std=round(np.std(actions_taken), ndigits=DECIMALS*2),
                                                       epsilon = round(current_epsilon, ndigits=DECIMALS),
                                                       timeStep=round(np.mean(self.step_time), ndigits=DECIMALS),

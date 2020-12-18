@@ -7,6 +7,8 @@ import numpy as np
 from RobotController.MovementControl.FiniteStateMachine import FiniteStateMachine
 from time import time as t
 from collections import deque
+from matplotlib import pyplot as plt
+import os
 
 class FiniteStateMachineWorld():
     def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_CM, wall_security_distance_in_cm = WALL_SECURITY_DISTANCE_IN_M,
@@ -77,8 +79,17 @@ class FiniteStateMachineWorld():
     def play(self, plot_reward = False, verbose = True):
         start_time = t()
         play_time = t()-start_time
+        rewards = []
+        actions = 0
         while(play_time<PLAY_SESSION_TIME_IN_SECONDS):
-            self.step(verbose=verbose)
+            actions += 1
+            rewards.append(self.step(verbose=verbose, return_reward=plot_reward))
+            if actions % 50 == 0:
+                plot_rewards(rewards=rewards)
+
+
+
+
 
 
     def render(self):
@@ -106,6 +117,16 @@ def get_state_reward(state):
     wall_distance_reward *= WALL_DISTANCE_INFLUENCE/2
 
     return dist_to_person_reward+wall_distance_reward
+
+def plot_rewards(rewards, path=FINITE_STATE_MACHINE_DIR):
+    plt.plot(rewards)
+    title = "Average Finite State Machine Reward. Mean - {m}. Std - {std}".format(m=np.round(np.mean(rewards), decimals=2),
+                                                                                  std=np.round(np.std(rewards), decimals=2))
+    plt.title(title)
+    plt.xlabel("Action")
+    plt.ylabel("Reward")
+    plt.savefig(os.path.join(path, title+'.png'))
+    plt.close
 
 def map_reward(x, in_min, in_max, out_min=MIN_REWARD_BY_PARAM, out_max=MAX_REWARD_BY_PARAM):
   # Arduino Map

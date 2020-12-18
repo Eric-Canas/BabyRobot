@@ -42,6 +42,8 @@ USUAL_CASE_USE_PROB = 0.05
 RL_CONTROLLER_DIR = join('Models', 'RLController')
 RL_CONTROLLER_PTH_FILE = 'Controller.pth'
 
+FINITE_STATE_MACHINE_DIR = join('Models', 'Finite State Machine')
+
 LOSSES_FILE_NAME = 'CumulatedLosses.pkl'
 REWARDS_FILE_NAME = 'CumulatedReward.pkl'
 REPLAY_BUFFER_FILE_NAME = 'LastReplayBuffer.pkl'
