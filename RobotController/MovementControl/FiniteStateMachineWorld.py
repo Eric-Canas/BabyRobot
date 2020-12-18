@@ -76,7 +76,7 @@ class FiniteStateMachineWorld():
             reward = get_state_reward(state=new_state)
             return reward
 
-    def play(self, plot_reward = False, verbose = True):
+    def play(self, plot_reward = True, verbose = True):
         start_time = t()
         play_time = t()-start_time
         rewards = []
