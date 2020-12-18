@@ -19,6 +19,7 @@ class Validator:
         :param buffer_size: int. Size of the replay states
         :param batch_size: int. Size of the Batch
         """
+        input_size = input_size + len(ROTATION_ADVANCE_BY_ACTION[-1])
         # Instantiate both models
         self.current_model = DQN(input_size=input_size, num_actions=action_size)
         if charge_data_from is not None:
