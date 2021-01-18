@@ -9,6 +9,15 @@ H = 0
 class CameraCalculator:
 	def __init__(self, pixel_size_in_um = SENSOR_PIXEL_SIZE_IN_UM, Sensor_dim_in_px = SENSOR_DIM_IN_PIXELS,
 				 focal_in_mm = FOCAL_IN_MM, element_heigth_in_cm = ELEMENT_HEIGHT_IN_CM):
+		"""
+		Uses the Gauss Formula for Lens for calculating the distance to the baby in function of the parameters of the
+		camera (focal length, sensor dimensions and pixel size), the height of the target and the height of its
+		detected reflexion in the camera sensor.
+		:param pixel_size_in_um: Float. Pixel size of the sensor in micrometers
+		:param Sensor_dim_in_px: (Int, Int). Dimensions of the camera sensor.
+		:param focal_in_mm: Float. Focal Lenght of the Camera in milimeters.
+		:param element_heigth_in_cm: Float. Height of the element to measure in centimenters
+		"""
 		self.sensor_dimensions_in_cm = (Sensor_dim_in_px[0] * (pixel_size_in_um / 10000), Sensor_dim_in_px[1] * (pixel_size_in_um / 10000))
 		self.focal_in_cm = focal_in_mm / 10
 		self.element_height_in_cm = element_heigth_in_cm
@@ -16,6 +25,16 @@ class CameraCalculator:
 		self.cos_of_half_aperture = cos(radians(self.sensor_aperture_in_degrees / 2.0))
 
 	def rectangleToRealWorldXY(self, rectangle, h, w, element_height_in_cm = None, x_in_world_space = False):
+		"""
+		Calculates which is the distance to an element in the real world for the size of a given rectangle.
+		:param rectangle: (Int, Int, Int, Int). Rectangle with the format (x1, y1, x2, y2).
+		:param h: Int. Height of the camera sensor.
+		:param w: Int. Width of the camera sensor.
+		:param element_height_in_cm: Float. Height of the element to which measure distances (in the real world) in cm.
+		:param x_in_world_space: Boolean. If True, return X in real world coordinates. If False, return the deviation
+										  in pixels of the rectangle with respect to the center of the image.
+		:return: (Float, Float or Int). Distance to the object in the real world. In format (x, y)
+		"""
 		if element_height_in_cm is None:
 			element_height_in_cm = self.element_height_in_cm
 		y = self.getDistance(rectangle=rectangle, h=h, element_height_in_cm=element_height_in_cm)
@@ -23,6 +42,14 @@ class CameraCalculator:
 		return (x,y)
 
 	def getDistance(self, rectangle, h, element_height_in_cm = None):
+		"""
+		Calculates the distance to an element in the real world, with respect with the height of the rectangle
+		of the subimage that contains it and the real height of the object in the real world.
+		:param rectangle: (Int, Int, Int, Int). Rectangle with the format (x1, y1, x2, y2).
+		:param h: Int. Height of the camera sensor.
+		:param element_height_in_cm: Float. Height of the element to which measure distances (in the real world) in cm.
+		:return: Float. Distance to the element.
+		"""
 		if element_height_in_cm is None:
 			element_height_in_cm = self.element_height_in_cm
 		(x1, y1, x2, y2) = rectangle
@@ -33,6 +60,15 @@ class CameraCalculator:
 		return distance_to_objective
 
 	def getXPos(self, rectangle, w, distance=None):
+		"""
+		Returns the X deviation to an object. If distance is not None in real world coordinates, elsewhere in pixels.
+		:param rectangle: (Int, Int, Int, Int). Rectangle with the format (x1, y1, x2, y2).
+		:param w: Int. Width of the camera sensor.
+		:param x_in_world_space: Boolean. If True, return X in real world coordinates. If False or None,
+										  return the deviation in pixels of the rectangle with respect to the
+										  center of the image.
+		:return: Float or Int. Distance to the real object in real world coordinates or pixels.
+		"""
 		(x1, y1, x2, y2) = rectangle
 		#Calcs the distance ideal in img, to be X=0
 		center = w / 2.0# - rectangle[Tracker.W]/2.0
@@ -59,4 +95,13 @@ class CameraCalculator:
 
 
 def map(x, in_min, in_max, out_min, out_max):
+	"""
+	Finds the equivalent interpolation of the point x in the 'in' range for the 'out' range.
+	:param x: Float. Point in the 'in' range
+	:param in_min: Float. Minimum of the 'in' range.
+	:param in_max: Float. Maximum of the 'in' range.
+	:param out_min: Float. Minimum of the 'out' range.
+	:param out_max: Float. Maximum of the 'out' range.
+	:return: Float. Wquivalent interpolation of the point x for the 'out' range.
+	"""
 	return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min

@@ -1,3 +1,9 @@
+"""
+If the code is executed in a Raspberry, define PiCamera as the communicator with the PiCamera.
+Elsewhere instantiate a Mock Object for debugging in the PC.
+"""
+
+
 from Constants import NEW_PROPOSALS_DATA_DIR, CROPPED_FACES_DATA_DIR
 from RobotController.PiCamera.CameraCalculator.PiCameraV2Parameters import PREFERRED_RESOLUTION, FRAME_RATE, DEFAULT_PICAMERA_SHUTTER_SPEED, DEFAULT_PICAMERA_ISO
 
@@ -11,6 +17,9 @@ try:
     from picamera import PiCamera as SuperPiCamera
 
     class PiCamera(SuperPiCamera):
+        """
+        Define PiCamera as a Singleton class, for avoiding multiple objects pointing to the same physical PiCamera
+        """
         class __PiCamera(SuperPiCamera):
             def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE//3, FRAME_RATE),
                          shutter_speed = DEFAULT_PICAMERA_SHUTTER_SPEED, iso = DEFAULT_PICAMERA_ISO):
@@ -24,8 +33,17 @@ try:
 
         instance = None
 
-        def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE, FRAME_RATE // 3), shutter_speed = DEFAULT_PICAMERA_SHUTTER_SPEED,
-                     iso = DEFAULT_PICAMERA_ISO):
+        def __init__(self, resolution=PREFERRED_RESOLUTION, framerate_range=(FRAME_RATE, FRAME_RATE // 3),
+                     shutter_speed = DEFAULT_PICAMERA_SHUTTER_SPEED, iso = DEFAULT_PICAMERA_ISO):
+            """
+            Overrides the PiCamera class and its functions with one that is set with the configuration needed for the
+            robot
+            :param resolution: (Int, Int). Preferred Resolution for the camera. By default, same as the
+                                           RecognitionPipeline input.
+            :param framerate_range: Int. Preferred Frame Rate.
+            :param shutter_speed: Int. Preferred shutter speed.
+            :param iso: Int. Preferred ISO.
+            """
             if PiCamera.instance is None:
                 PiCamera.instance = PiCamera.__PiCamera(resolution=resolution, framerate_range=framerate_range,
                                                         shutter_speed = shutter_speed, iso=iso)
@@ -39,6 +57,10 @@ try:
             return setattr(self.instance, key, value)
 
         def capture_continuous(self):
+            """
+            Overrides the Capture Continuous Function of the PiCamera Class, making the buffer transparent.
+            :return: Numpy. Yield an image in format Blue-Green-Red.
+            """
             self.raw_capture.truncate(0)
             for image in super().capture_continuous(self.raw_capture, format="bgr", use_video_port=True):
                 if cv2.waitKey(1) & 0xFF == ord("q"):
@@ -47,10 +69,17 @@ try:
                 yield image.array
 
         def capture(self):
+            """
+            Captures an image from the environment and returns it as a numpy image in format Blue-Green-Red.
+            :return:
+            """
             self.raw_capture.truncate(0)
             super().capture(self.raw_capture, 'bgr')
             return self.raw_capture.array
 except:
+    """
+    Do a Mock Object for testing without the Raspberry
+    """
     warn("picamera module not found. PiCamera will be a Mock Object")
     from VisionEngine.Dataset import read_image
     from Constants import FULL_PHOTOS_DATA_DIR

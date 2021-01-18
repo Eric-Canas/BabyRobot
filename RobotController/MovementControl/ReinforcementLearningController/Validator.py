@@ -13,11 +13,14 @@ class Validator:
                  charge_data_from = RL_CONTROLLER_DIR, model_dir = RL_CONTROLLER_PTH_FILE,
                  person_to_follow = DEFAULT_PERSON_TO_FOLLOW, session_time = PLAY_SESSION_TIME_IN_SECONDS):
         """
-        Include the double Q network and is in charge of train and manage it
-        :param input_size:
-        :param action_size:
-        :param buffer_size: int. Size of the replay states
-        :param batch_size: int. Size of the Batch
+        Executes the DQN in PlayTime mode (validation)
+        :param input_size: Int. Size of an state
+        :param action_size: Int. Amount of actions that can be taken by the DQN.
+        :param env: World. Object that interacts and analyzes the environment.
+        :param charge_data_from: String. Path for charging the DQN information. If None (default) starts it from anew.
+        :param model_dir: String. Filename of the file containing the DQN state_dict.
+        :param person_to_follow: Name of the person to follow (or None if 'follow anyone' mode)
+        :param session_time: Float. Maximum time (In seconds) for the play session.
         """
         input_size = input_size + len(ROTATION_ADVANCE_BY_ACTION[-1])
         # Instantiate both models

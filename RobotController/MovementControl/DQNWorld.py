@@ -11,6 +11,19 @@ from collections import deque
 class World():
     def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_CM, wall_security_distance_in_cm = WALL_SECURITY_DISTANCE_IN_M,
                  controller = None, recognition_pipeline = None, average_info_from_n_images = 1, movement_mode=DEFAULT_MOVEMENT_MODE):
+        """
+        Environment. Interacts with the environment and analyzes it. Version for the DQN
+        :param objective_person: String. Objective person to follow (Or None if 'follow anyone' mode)
+        :param distance_to_maintain_in_m: Float. Distance to maintain with the objective. In Meters
+        :param wall_security_distance_in_cm: Float. Minimum distance allowed for a wall.
+        :param controller: Controller. Controller of the robot, for communicating with its sensors and actuators.
+        :param recognition_pipeline: RecognitionPipeline. Computer Vision Pipeline to use for recognizing the target and
+                                                          calculating the distances to it.
+        :param average_info_from_n_images: Int. Number of images to average for creating a variable that helps the
+                                                DQN to discover when, although it thinks that is in movement, it is
+                                                really not.
+        :param movement_mode: String. Movement mode. One of: 'sync', 'async', '50-50', '33-66' (Default is 'sync').
+        """
         if objective_person in KNOWN_NAMES:
             self.objective_person = objective_person
         elif objective_person is None:
@@ -31,6 +44,13 @@ class World():
         self.motionless_times_no_detect = deque(maxlen=30)
 
     def step(self, action, time=MOVEMENT_TIME, verbose=True):
+        """
+        Execute an action in the environment, checks the new state and calculates the reward.
+        :param action: Int. Action to execute.
+        :param time: Float. Time between the start of the action execution and the stop
+        :param verbose: Boolean. If True, verboses the time spent motionless.
+        :return: (List of Float, Float). New state and the reward
+        """
         if verbose:
             motionless_time = t()-self.last_movement_time
             print("Motionless Time Detect Mean: {mean}, STD: {std}".format(
@@ -106,10 +126,18 @@ class World():
 
 
     def render(self):
+        """
+        Shows the image of the environment and the recognitions in it
+        """
         image = self.controller.capture_image()
         self.recognition_pipeline.show_recognitions(image=image)
 
 def get_state_reward(state):
+    """
+    Returns the reward of the environment for the new state
+    :param state: List of float. Current state of the environment
+    :return: Float. Reward obtained for the new state.
+    """
     x_dist, y_dist, are_x_y_valid, image_difference, back_distance, front_distance = state
     # Measure to meters
     if not np.isclose(are_x_y_valid, 0.):
@@ -132,5 +160,14 @@ def get_state_reward(state):
     return dist_to_person_reward+wall_distance_reward
 
 def map_reward(x, in_min, in_max, out_min=MIN_REWARD_BY_PARAM, out_max=MAX_REWARD_BY_PARAM):
+  """
+  Finds the equivalent interpolation of the point x in the 'in' range for the 'out' range.
+  :param x: Float. Point in the 'in' range
+  :param in_min: Float. Minimum of the 'in' range.
+  :param in_max: Float. Maximum of the 'in' range.
+  :param out_min: Float. Minimum of the 'out' range.
+  :param out_max: Float. Maximum of the 'out' range.
+  :return: Float. Wquivalent interpolation of the point x for the 'out' range.
+  """
   # Arduino Map
   return np.clip(a=(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min, a_min=out_min, a_max=out_max)

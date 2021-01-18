@@ -33,6 +33,8 @@ class Controller:
     def __setattr__(self, key, value):
         return setattr(self.instance, key, value)
 
+    # --------------------------- CALL TO THE FUNCTIONS OF EACH SENSOR/ACTUATOR ---------------
+
     def idle(self, time = None):
         self.motor_controller.idle(time=time)
 

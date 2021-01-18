@@ -1,5 +1,7 @@
 from RobotController.PiCamera.PiCamera import PiCamera
 
+"""Configure and overrides the PiCamera"""
+
 class CameraController:
     def __init__(self, camera = None):
         self.camera = camera if camera is not None else PiCamera()

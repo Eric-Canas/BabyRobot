@@ -19,6 +19,19 @@ class FiniteStateMachine:
     def __init__(self, controller=None, movement_mode=DEFAULT_MOVEMENT_MODE, dist_epsilon=DIST_EPSILON,
                  catching_attention_prob=CATCHING_ATTENTION_PROB, ensure_lose_images=ENSURE_LOSE_IMAGES,
                  consecutive_avoiding_obstacles_tries = CONSECUTIVE_AVOIDING_OBSTACLES_TRIES):
+        """
+        Finite State Machine model for controlling the robot.
+        :param controller: Controller. Controller of the robot, for communicating with its sensors and actuators.
+        :param movement_mode: String. Movement mode. One of: 'sync', 'async', '50-50', '33-66' (Default is 'sync').
+        :param dist_epsilon: Float. Maximum allowed error for considering that the target is not centered.
+        :param catching_attention_prob: Float. Probability of entering in the state 'Catch Attention' the machine is
+                                               in the state 'Centered'.
+        :param ensure_lose_images: Int. Amount of images that must be taken without detecting the target for considering
+                                        that it is lost.
+        :param consecutive_avoiding_obstacles_tries: Int. Maximum tries for avoiding an obstacle for considering that
+                                                          it is a wall.
+        """
+
         self.state = SEARCHING
         self.dist_epsilon = dist_epsilon
         self.catching_attention_prob = catching_attention_prob
@@ -31,6 +44,11 @@ class FiniteStateMachine:
         self.consecutive_avoiding_obstacles_tries = consecutive_avoiding_obstacles_tries
 
     def act(self, state, verbose = True):
+        """
+        Checks the environment, updates the state and executes the action associated to the new state.
+        :param state: String. Current state of the environment
+        :param verbose: Boolean. If True, verboses the process
+        """
         x_dist, y_dist, are_x_y_valid, back_distance, front_distance = state[X_DIST_POS], state[Y_DIST_POS], state[ARE_X_Y_VALID_POS], state[BACK_DISTANCE_POS], state[FRONT_DISTANCE_POS]
         are_x_y_valid = not np.isclose(are_x_y_valid, 0)
         x_deviation, y_deviation = self.x_location_deviation(dist=x_dist), self.y_location_deviation(dist=y_dist)
@@ -88,6 +106,13 @@ class FiniteStateMachine:
             self.last_x_deviation = x_deviation
 
     def x_location_deviation(self, dist):
+        """
+        Returns -1 if the target is relevantly deviated to left, 1 if it is relevantly deviated to right or 0 if it is
+        not relevantly deviated.
+        :param dist: Float. X distance to the target.
+        :return: Int. -1 if the target is relevantly deviated to left, 1 if it is relevantly deviated to right
+                    or 0 if it is not relevantly deviated.
+        """
         if -self.dist_epsilon*2 < dist < self.dist_epsilon*2:
             return NO_DEVIATION
         elif dist < -self.dist_epsilon*2:
@@ -96,6 +121,11 @@ class FiniteStateMachine:
             return RIGHT
 
     def y_location_deviation(self, dist):
+        """
+        Returns -1 if the target is relevantly too close, 1 if it is too far or 0 otherwise
+        :param dist: Float. Y distance to the target.
+        :return: Int. -1 if the target is relevantly too close, 1 if it is too far or 0 otherwise
+        """
         if -self.dist_epsilon < dist < self.dist_epsilon:
             return NO_DEVIATION
         elif dist < -self.dist_epsilon:
@@ -105,6 +135,12 @@ class FiniteStateMachine:
 
 
     def get_best_innacurate_state(self, x_dev, y_dev):
+        """
+        Gets which is the best state for cases where the target is located but not centered.
+        :param x_dev: Int. X Deviation of the target.
+        :param y_dev: Int. Y Deviation of the target.
+        :return:
+        """
         if y_dev < 0:
             return ESCAPING
         if x_dev != 0:
@@ -113,6 +149,12 @@ class FiniteStateMachine:
             return APPROACHING
 
     def turn_to_x(self, x_dist, y_dist):
+        """
+        Turns to the direction to which the target is deviated, in order to re-center it. The amount of time turning
+        depends how much deviated it is. If it turns advancing at the same time of retreating depends on the y distance.
+        :param x_dist: Float. X Distance to the target.
+        :param y_dist: Float. Y Distance to the target.
+        """
         time = map(x=abs(x_dist), in_min=0, in_max=INPUT_SIZE[-1]/2, out_min=0, out_max=MOVEMENT_TIME/1.75)
         if x_dist < 0.:
             if y_dist <= 0.:
@@ -126,18 +168,32 @@ class FiniteStateMachine:
                 self.controller.go_right_front(time=time)
 
     def catch_attention(self):
+        """
+        Executes the 'Catch Attention' action. It is... rotate clockwise 90º, rotate counterclokwise 180º and
+        rotate clockwise 90º again, in order to return to the initial position.
+        :return:
+        """
         self.controller.rotate_clockwise()
         self.controller.rotate_counterclockwise()
         self.controller.rotate_counterclockwise()
         self.controller.rotate_clockwise()
 
     def search(self):
+        """
+        Rotates to the direction to which the target was seen by last time before lost.
+        """
         if self.last_seen_direction == RIGHT:
             self.controller.rotate_clockwise(time=MOVEMENT_TIME/2)
         else:
             self.controller.rotate_counterclockwise(time=MOVEMENT_TIME/2)
 
     def avoid_obstacle(self, back_distance, front_distance):
+        """
+        Executes the movement for avoiding an obstacle.
+        :param back_distance: Float. Distance to the closest obstacle in the back.
+        :param front_distance: Float. Distance to the closest obstacle in the front.
+        :return:
+        """
         escape_direction = choice([RIGHT, LEFT])
         if self.consecutive_avoiding_obstacles > self.consecutive_avoiding_obstacles:
             for _ in range(4):
@@ -166,6 +222,15 @@ class FiniteStateMachine:
 
 
 def map(x, in_min, in_max, out_min, out_max):
+  """
+  Finds the equivalent interpolation of the point x in the 'in' range for the 'out' range.
+  :param x: Float. Point in the 'in' range
+  :param in_min: Float. Minimum of the 'in' range.
+  :param in_max: Float. Maximum of the 'in' range.
+  :param out_min: Float. Minimum of the 'out' range.
+  :param out_max: Float. Maximum of the 'out' range.
+  :return: Float. Wquivalent interpolation of the point x for the 'out' range.
+  """
   # Arduino Map
   return np.clip(a=(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min, a_min=out_min, a_max=out_max)
 

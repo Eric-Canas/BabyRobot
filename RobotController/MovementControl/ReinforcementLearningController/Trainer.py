@@ -32,11 +32,28 @@ class Trainer:
                  promote_improvement_in_reward=False, DQN_lr = DQN_LEARNING_RATE, send_security_copy=False, tele_operate_exploration = False,
                  verbose = True):
         """
-        Include the double Q network and is in charge of train and manage it
-        :param input_size:
-        :param action_size:
-        :param buffer_size: int. Size of the replay states
-        :param batch_size: int. Size of the Batch
+        Trainer of the DQN.
+        :param input_size: Int. Size of an state
+        :param action_size: Int. Amount of actions that can be taken by the DQN.
+        :param gamma: Float. Gamma of the Q-Learning algorithm
+        :param buffer_size: Int. Capacity of the Replay Buffer.
+        :param batch_size: Int. Batch size used for training the DQN.
+        :param loss: Function. Loss function for training the DQN. It must receive as input y_pred and y_true.
+        :param env: World. Object that interacts and analyzes the environment.
+        :param clip_weights: Boolean. If True, the weights of the DQN are clipped between -1 and 1.
+        :param episodes_between_saving: Int. Number of episodes each which the DQN is saved in a file.
+        :param charge_data_from: String. Path for charging the DQN information. If None (default) starts it from anew.
+        :param save_data_at: String. Path where to save the DQN information in order to charge it in future executions.
+        :param model_dir: String. Filename of the file containing the DQN state_dict.
+        :param session_time: Float. Time in seconds for the training session.
+        :param input_last_actions: Int. Number of last actions to include in an Input (sequence of the LSTM-DQN).
+        :param promote_improvement_in_reward: Boolean. If True, includes a bonus in the reward by improving with respect
+                                                       to the last time step.
+        :param DQN_lr: Float. Learning rate for the DQN.
+        :param send_security_copy: Boolean. If True (and the RecognitionPipeline is being executed in Server/Client
+                                            mode) send security copies to the Server every time that a file is saved.
+        :param tele_operate_exploration: Boolean. If True allow to input the next action to take through the keyboard.
+        :param verbose: Boolean. If True, verboses the process.
         """
         self.input_size = input_size+len(ROTATION_ADVANCE_BY_ACTION[-1])#(input_size*input_last_actions)+(action_size*(input_last_actions-1))
         self.input_buffer = InputQueue(capacity=input_last_actions, action_size = action_size)
@@ -88,6 +105,11 @@ class Trainer:
         self.tele_operate_exploration = tele_operate_exploration
 
     def get_action(self, state, epsilon = 0.):
+        """
+        Returns the action predicted by the DQN
+        :param state: List of int. Current state of the environment.
+        :param epsilon: Float. Value of epsilon for exploitation-exploration
+        """
         if random() > epsilon:
             action = self.current_model.act(state, epsilon=epsilon-EPSILON_FINAL)
         else:
@@ -98,6 +120,12 @@ class Trainer:
         return action
 
     def request_for_action(self, timeout=REQUEST_FOR_ACTION_TIMEOUT):
+        """
+        Try to request of a user action introduced from the keyboard. If it writes it, uses this action. If it does not
+        include any input in timeout seconds, return a random action.
+        :param timeout: Float. Time in seconds for keep waiting for an user input.
+        :return: Int. Action selected (or random action if no input was received).
+        """
         action = get_key(timeout=timeout)
         if self.verbose: print("Teleoperated action introduced: {act}".format(act=action))
         if action == INVALID:
@@ -273,9 +301,19 @@ class Trainer:
                 return None
 
     def additional_maintaing_score(self,composed_state):
+        """
+        Updates the score for rewarding to maintain the target located.
+        :param composed_state: List of Ints. Current composed state of the environment.
+        :return: Float. Updated score.
+        """
         return torch.sum((self.buffer_influence * composed_state[:, ARE_X_Y_VALID_POS])* MAINTAIN_PERSON_BONUS).item()
 
     def save(self):
+        """
+        Saves the model state. If send security copy is True (and it is being executed in the server), sends a security
+        copy of every file (losses, rewards, plots and state_dict) to the server.
+        :return:
+        """
         self.current_model.save()
         self.save_losses_rewards_and_buffer(save_data_at=self.save_data_at)
         self.plot_loss_and_rewards(save_at=self.save_data_at)
@@ -286,6 +324,15 @@ class Trainer:
 
     def charge_previous_losses_and_rewards(self, charge_from = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
                                            rewards_file=REWARDS_FILE_NAME,  replay_buffer_file = REPLAY_BUFFER_FILE_NAME):
+        """
+        Charges the information of the last training.
+        :param charge_from: String. Path where the files with the rewards, the losses and the past replay buffers are
+                                    located.
+        :param losses_file: String. Filename of the file containing the losses.
+        :param rewards_file: String. Filename of the file containing the rewards.
+        :param replay_buffer_file: String. Filename of the file containing the past replay buffers.
+        :return: Three lists. One with the losses, another with the rewards and another with the replay buffer.
+        """
         losses_path, rewards_path, replay_buffer_path = join(charge_from, losses_file), join(charge_from, rewards_file), \
                                                         join(charge_from, replay_buffer_file)
         losses = load(open(losses_path, 'r'+FILES_CODIFICATION)) if isfile(losses_path) else []
@@ -295,6 +342,14 @@ class Trainer:
 
     def save_losses_rewards_and_buffer(self, save_data_at = RL_CONTROLLER_DIR, losses_file = LOSSES_FILE_NAME,
                                        rewards_file=REWARDS_FILE_NAME, replay_buffer_file = REPLAY_BUFFER_FILE_NAME):
+        """"
+        Saves the information of the current training.
+        :param save_data_at: String. Path where to save the files with the rewards, the losses and the past
+                                     replay buffers.
+        :param losses_file: String. Filename of the file where to save the losses.
+        :param rewards_file: String. Filename of the file where to save the rewards.
+        :param replay_buffer_file: String. Filename of the file where to save the current replay buffer.
+        """
         if not isdir(save_data_at):
             makedirs(save_data_at)
         losses_path, rewards_path, replay_buffer_path = join(save_data_at, losses_file), join(save_data_at, rewards_file), \
@@ -305,6 +360,12 @@ class Trainer:
 
 
     def plot_loss_and_rewards(self, save_at = RL_CONTROLLER_DIR, smoothness_kernel_shape=SMOOTHNESS_KERNEL_SHAPE, smoothness_sigma=SMOOTHNESS_SIGMA):
+        """
+        Plots the reward and the loss evolution.
+        :param save_at: String. Path where to save the plots
+        :param smoothness_kernel_shape: Int. Kernel shape of the gaussian used for drawing the spline of the plot.
+        :param smoothness_sigma: Float. Std of the gaussian used for drawing the spline of the plot.
+        """
         conv_kernel = gaussian(shape=smoothness_kernel_shape, sigma=smoothness_sigma)
 
 
@@ -326,6 +387,12 @@ class Trainer:
             plt.close()
 
 def gaussian(shape=11, sigma=1.):
+    """
+    Return a gaussian kernel with the given sigma as standard deviation
+    :param shape: Int. Shape of the gaussian kernet
+    :param sigma: Float. Standard deviation of the gaussian kernel
+    :return: 2D Numpy. Numpy with a gaussian kernel of (shapeXshape) with sigma = sigma.
+    """
     if shape%2 == 0:
         warn("Gaussian size adjusted to nearest odd: {int1} -> {int2}".format(int1=shape, int2=shape+1))
     vector = np.arange(-shape//2, shape//2, dtype=np.float32)

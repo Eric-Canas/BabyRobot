@@ -11,16 +11,33 @@ from cv2 import cvtColor, COLOR_BGR2RGB
 from Constants import CRAWLING_BODY_HEIGHT_IN_CM
 
 class RecognitionPipeline:
-    def __init__(self, face_detector = None, body_detector = None, embedding = None, classifier = None, camera_calculator = None, show_bodies = False):
-
+    def __init__(self, face_detector = None, body_detector = None, embedding = None, classifier = None,
+                 camera_calculator = None, show_bodies = False):
+        """
+        Whole recognition pipeline that will receive an image as input an will detect and identify the faces in it.
+        It will detect the bodies if no faces appear in the image.
+        :param face_detector: Detector. Face detector to use.
+        :param body_detector: Detector. Body detector to use as B-Plan.
+        :param embedding: Emdedding. Embedder to use for embedding the faces detected.
+        :param classifier: Recognizer. Recognition pipeline to use for identifying the detected faces.
+        :param camera_calculator: CameraCalculator. CameraCalculator to use for measuring distances
+        :param show_bodies: Boolean. If True, search for bodies as B-Plan if no faces are detected.
+        """
         self.face_detector = face_detector if face_detector is not None else Detector(OpenCVFaceDetector())
         self.show_bodies = show_bodies
         self.body_detector = body_detector if body_detector is not None else Detector(BodyDetector())
         self.embedding = embedding if embedding is not None else Embedding(MobileFaceNet())
-        self.classifier = classifier if classifier is not None else Recognizer(embedding=self.embedding) # binary_recognition='Albaby')
+        self.classifier = classifier if classifier is not None else Recognizer(embedding=self.embedding)
         self.camera_calculator = camera_calculator if camera_calculator is not None else CameraCalculator()
 
     def show_recognitions(self, image, verbose = False, return_faces = False):
+        """
+        Detects the faces and bodies in an image and plots all the recognitions in a window.
+        :param image: Numpy. Input Image in format BGR.
+        :param verbose: Boolean. If true, verboses the inference time.
+        :param return_faces: Boolean. If True, return the detected faces as input
+        :return: {String : Numpy Image}. If return_faces is true, returns a dictionary with the faces detected.
+        """
         if verbose:
             start_time = time()
         boxes = self.face_detector.predict(image=image)
@@ -90,6 +107,10 @@ class RecognitionPipeline:
             return {}
 
     def show_detections(self, image):
+        """
+        Plot the detections without any associated identification.
+        :param image: Numpy. Input Image in format BGR.
+        """
         boxes = self.face_detector.predict(image=image)
         if len(boxes) == 0:
             boxes = self.body_detector.predict(image=image)
@@ -101,6 +122,11 @@ class RecognitionPipeline:
         show(image=image, boxes=boxes, names=None, distances=distances, confidences=confidences)
 
     def get_faces_in_image(self, image):
+        """
+        Return the sub-images that contains a face in 'image' including the name associated to each face.
+        :param image: Numpy. Input Image in format BGR.
+        :return: {Name : Numpy Image}. Dictionary with the sub-image of each detected face with its identification.
+        """
         face_boxes = self.face_detector.predict(image=image)
         if len(face_boxes) > 0:
             faces = self.face_detector.crop_boxes_content(image=image, boxes=face_boxes)
@@ -111,6 +137,13 @@ class RecognitionPipeline:
             return {}
 
     def get_distance_to_faces(self, image, y_offset = 0.):
+        """
+        Measure the distances to the faces that appears in an image
+        :param image: Numpy. Input Image in format BGR.
+        :param y_offset: Float. Y offset to apply to the detection. Usually the preferred distance to maintain with
+                                the target, so distance will indicate the deviation to it.
+        :return: {Name : Float}. Dictionary with the distances associated to each person in the image.
+        """
         face_boxes = self.face_detector.predict(image=image)
         if len(face_boxes):
             faces = self.face_detector.crop_boxes_content(image=image, boxes=face_boxes)
@@ -127,6 +160,15 @@ class RecognitionPipeline:
         return {name : distances for distance, name in zip(distances, names)}
 
     def get_distance_without_identities(self, image, y_offset=0., detect_body_if_face_not_found = True):
+        """
+        Measure the distances to the faces or bodies that appears in an image
+        :param image: Numpy. Input Image in format BGR.
+        :param y_offset: Float. Y offset to apply to the detection. Usually the preferred distance to maintain with
+                                the target, so distance will indicate the deviation to it.
+        :param detect_body_if_face_not_found: Boolean. If True, try to detect bodies if no faces appear in the image.
+        :return: List of Float. List with the distances associated to any detected face or body
+                                (without any identification).
+        """
         boxes = self.face_detector.predict(image=image)
         element_height = None
         if detect_body_if_face_not_found and len(boxes) == 0:
@@ -141,6 +183,12 @@ class RecognitionPipeline:
             return ()
 
 def sum_y_offset(distances, y_offset=0.):
+    """
+    For every tuple in a list of (x,y) positions, adds an offset to y.
+    :param distances: List of tuples (Int, Int). List with the (x, y) positions to which sum the offset.
+    :param y_offset: Float. Offset to add.
+    :return: List of tuples (Int, Int). List of the (x, y) with the offset added to Y.
+    """
     if type(distances) is dict:
         raise NotImplementedError()
     elif type(distances[0]) not in [list, tuple]:

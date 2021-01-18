@@ -13,6 +13,20 @@ import os
 class FiniteStateMachineWorld():
     def __init__(self, objective_person, distance_to_maintain_in_m = DISTANCE_TO_MAINTAIN_IN_CM, wall_security_distance_in_cm = WALL_SECURITY_DISTANCE_IN_M,
                  controller = None, recognition_pipeline = None, average_info_from_n_images = 1, movement_mode=DEFAULT_MOVEMENT_MODE, finite_state_machine=None):
+        """
+        Environment. Interacts with the environment and analyzes it. Version for the FiniteState Machine.
+       :param objective_person: String. Objective person to follow (Or None if 'follow anyone' mode)
+       :param distance_to_maintain_in_m: Float. Distance to maintain with the objective. In Meters
+       :param wall_security_distance_in_cm: Float. Minimum distance allowed for a wall.
+       :param controller: Controller. Controller of the robot, for communicating with its sensors and actuators.
+       :param recognition_pipeline: RecognitionPipeline. Computer Vision Pipeline to use for recognizing the target and
+                                                         calculating the distances to it.
+       :param average_info_from_n_images: Int. Number of images to average for creating a variable that helps the
+                                               to discover when, although it thinks that is in movement, it is
+                                               really not.
+       :param movement_mode: String. Movement mode. One of: 'sync', 'async', '50-50', '33-66' (Default is 'sync').
+       :param finite_state_machine: FiniteStateMachine. Finite State Machine to use.
+       """
         if objective_person in KNOWN_NAMES:
             self.objective_person = objective_person
         elif objective_person is None:
@@ -34,6 +48,13 @@ class FiniteStateMachineWorld():
 
 
     def step(self, time=MOVEMENT_TIME, return_reward = False, verbose=True):
+        """
+        Checks the state of the world and executes an step in accordance with it.
+        :param time: Not used. Included for compatibility.
+        :param return_reward: Boolean. If True returns the reward. If False don't returns nothing.
+        :param verbose: Boolean. If True, verboses the time with the robot remains motionless.
+        :return: If return_reward is True, returns the reward as a Float.
+        """
         new_state = np.empty(shape=len(STATES_ORDER), dtype=np.float32)
         image = self.controller.capture_image()
         if self.objective_person is not None:
@@ -77,6 +98,11 @@ class FiniteStateMachineWorld():
             return reward
 
     def play(self, plot_reward = True, verbose = True):
+        """
+        Executes the play bucle.
+        :param plot_reward: Boolean. If True, plots the obtained reward every 50 steps.
+        :param verbose: Boolean. If True, verboses the time with the robot remains motionless
+        """
         start_time = t()
         play_time = t()-start_time
         rewards = []
@@ -93,10 +119,18 @@ class FiniteStateMachineWorld():
 
 
     def render(self):
+        """
+        Shows the image of the environment and the recognitions in it
+        """
         image = self.controller.capture_image()
         self.recognition_pipeline.show_recognitions(image=image)
 
 def get_state_reward(state):
+    """
+        Returns the reward of the environment for the new state
+        :param state: List of float. Current state of the environment
+        :return: Float. Reward obtained for the new state.
+        """
     x_dist, y_dist, are_x_y_valid, image_difference, back_distance, front_distance = state
     # Measure to meters
     if not np.isclose(are_x_y_valid, 0.):
@@ -119,6 +153,12 @@ def get_state_reward(state):
     return dist_to_person_reward+wall_distance_reward
 
 def plot_rewards(rewards, path=FINITE_STATE_MACHINE_DIR):
+    """
+    Plots the obtained rewards.
+    :param rewards: List of Float. List with the obtained rewards.
+    :param path: String. Path where to save the plot
+    :return:
+    """
     plt.plot(rewards)
     title = "Average Finite State Machine Reward. Mean - {m}. Std - {std}".format(m=np.round(np.mean(rewards), decimals=2),
                                                                                   std=np.round(np.std(rewards), decimals=2))
@@ -129,5 +169,14 @@ def plot_rewards(rewards, path=FINITE_STATE_MACHINE_DIR):
     plt.close
 
 def map_reward(x, in_min, in_max, out_min=MIN_REWARD_BY_PARAM, out_max=MAX_REWARD_BY_PARAM):
+  """
+  Finds the equivalent interpolation of the point x in the 'in' range for the 'out' range.
+  :param x: Float. Point in the 'in' range
+  :param in_min: Float. Minimum of the 'in' range.
+  :param in_max: Float. Maximum of the 'in' range.
+  :param out_min: Float. Minimum of the 'out' range.
+  :param out_max: Float. Maximum of the 'out' range.
+  :return: Float. Wquivalent interpolation of the point x for the 'out' range.
+  """
   # Arduino Map
   return np.clip(a=(x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min, a_min=out_min, a_max=out_max)

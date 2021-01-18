@@ -1,3 +1,7 @@
+"""
+If the code is executed in a Raspberry, define UltrasoundController as the communicator with the SR04.
+Elsewhere instantiate a Mock Object for debugging in the PC.
+"""
 from time import sleep, time
 from warnings import warn
 
@@ -13,6 +17,12 @@ try:
     import RPi.GPIO as GPIO
     class UltraSoundController:
         def __init__(self, echo_pin = BACK_ECHO, trigger_pin = BACK_TRIGGER, timeout = TIMEOUT):
+            """
+            Communicator with the ultrasounds that allows to read distances
+            :param echo_pin: Int. Echo pin of the SR04
+            :param trigger_pin: Int. Trigger pin of the SR04
+            :param timeout: Float. Time out time (in seconds) for considering that the echo signal will not return.
+            """
             self.echo = echo_pin
             self.trigger = trigger_pin
             self.timeout = timeout
@@ -30,10 +40,17 @@ try:
             self.cleanup()
 
         def cleanup(self):
+            """
+            Clean the GPIO. Automatically called on __exit__.
+            """
             GPIO.cleanup()
 
 
         def get_distance(self):
+            """
+            Measures wich is the distance to the closer obstacle.
+            :return: Float. Distance in cm to the closer obstacle
+            """
             # Send the signal
             GPIO.output(self.trigger, True)
             sleep(SIGNAL_TIME)

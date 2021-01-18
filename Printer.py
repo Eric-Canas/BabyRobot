@@ -2,6 +2,15 @@ from Constants import *
 import cv2
 
 def show_detections(image, boxes, names=None, distances = None, confidences = None):
+    """
+    Plots in the screen an image with the detections drawn in it (updates when called again).
+    :param image: Numpy. Image to plot in BGR format.
+    :param boxes: List of rectangles in format (x1, y1, x2, y2). Boxes where the detections are.
+    :param names: List of String. List of the names associated to each location.
+    :param distances: List of Float. List of the distances associated to each location.
+    :param confidences: List of Float. List of confidences associated to each location
+    :return: Numpy. Image with all the detections and associated information drawn in it.
+    """
     if names is None: names = [None for _ in boxes]
     if confidences is None: confidences = [None for _ in boxes]
     if distances is None: distances = [(None, None) for _ in boxes]

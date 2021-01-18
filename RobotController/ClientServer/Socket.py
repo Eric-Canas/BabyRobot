@@ -28,6 +28,15 @@ STR_ENCODING = 'utf-8'
 PKL_EXTENSION = '.pkl'
 class Socket:
     def __init__(self, client=CLIENT, server_hostname = SERVER_HOSTNAME, tcp_port=TCP_PORT, ip=None, verbose=True):
+        """
+        Socket class that allows the communication between the client and the server.
+        :param client: Boolean. True if this server is for the client, False if it is for the Server.
+        :param server_hostname: String. Hostname of the server to connect.
+                                        Only used if client is True and IP is not None.
+        :param tcp_port: Int. TCP port to use.
+        :param ip: String. Ip of the server to which connect. Only used if client is True.
+        :param verbose: Boolean. If True, verboses the connection phases
+        """
         self.client = client
         self.tcp_port = tcp_port
         self.socket = socket.socket(socket.AF_INET , socket.SOCK_STREAM)
@@ -56,6 +65,10 @@ class Socket:
 
 
     def send_image(self, image):
+        """
+        CLIENT: Sends an image to the server, compressed in JPEG format for speeding up the transference.
+        :param image: numpy. Image to send to the server
+        """
         if self.verbose: start_time = time()
         pil_img = Image.fromarray(image)
         with io.BytesIO() as stream:
@@ -74,12 +87,20 @@ class Socket:
                                        seconds=round(time()-start_time, ndigits=DECIMALS), kbsize=round(image_len/1024, ndigits=DECIMALS)))
 
     def send_results(self, results):
+        """
+        SERVER: Sends the results of a function to the client.
+        :param results: tuple with the results to send.
+        """
         results = bytes(json.dumps(results), encoding=STR_ENCODING)
         self.client_socket.send(struct.pack(STRUCT_FORMAT, len(results)))
         self.client_socket.sendall(results)
         if self.verbose: print("Results sent back to client ({length} b)".format(length=len(results)))
 
     def receive_results(self):
+        """
+        CLIENT: Receives a tuple with the results of the last requested function from the server.
+        :return: (Int, Int). Tuple with the results of the last requested function.
+        """
         # Reads the header for obtaining the image size (connection-read blocks the execution until is received)
         with io.StringIO() as stream:
             if self.verbose: start_time = time()
@@ -92,16 +113,29 @@ class Socket:
         return results
 
     def send_int_code(self, code):
+        """
+        CLIENT: Sends an identifier code to the Server. Containing the function that should be executed
+        :param code: Int. Identifier of the function to execute. 0 for get_distance_without_identities and
+                          1 for get_distance_to_faces.
+        """
         code_in_bytes = bytes(str(code), encoding=STR_ENCODING)
         self.socket.send(code_in_bytes)
         if self.verbose: print("Sent int code for executing: {meth}.".format(meth=CODES[code]))
 
     def receive_int_code(self):
+        """
+        SERVER: Receives an int code from the Client, identifying the function that should be executed
+        :return: Int. Identifier code received from the client.
+        """
         code = int(self.client_socket.recv(1).decode(STR_ENCODING))
         if self.verbose: print("Received int code for executing: {meth}.".format(meth=CODES[code]))
         return code
 
     def receive_image(self):
+        """
+        SERVER: Receives an image from the client
+        :return: Numpy. Image received from the client.
+        """
         if self.verbose: start_time = time()
         # Reads the header for obtaining the image size (connection-read blocks the execution until is received)
         image_len = struct.unpack(STRUCT_FORMAT, self.connection.read(struct.calcsize(STRUCT_FORMAT)))[0]
@@ -114,6 +148,11 @@ class Socket:
         return received_image
 
     def send_file(self, file_path, verbose=True):
+        """
+        CLIENT: Sends a file to save in the server. Used for backups.
+        :param file_path: String. Path where to save the file.
+        :param verbose: Boolean. If true, verbose the weight of the file and the transference time.
+        """
         self.send_int_code(code=SAVE_FILE_CODE)
         with open(file_path, mode='rb') as stream:
             # Send file name length
@@ -141,6 +180,12 @@ class Socket:
                 if verbose: print("File sent in {seconds} s ({kbsize} Kb)".format(seconds=round(time()-start_time, ndigits=DECIMALS), kbsize=round(stream.tell()/1024, ndigits=DECIMALS)))
 
     def receive_file(self, save_it = True, verbose=True):
+        """
+        SERVER: Receives a file from the client.
+        :param save_it: Boolean. If True, saves it at the file path received.
+        :param verbose: Boolean. If True, verboses the weight of the file and the transference time.
+        :return: Dict. {FilePath : StringIO with the File}.
+        """
         file_path_length = struct.unpack(STRUCT_FORMAT, self.connection.read(struct.calcsize(STRUCT_FORMAT)))[0]
         file_path = self.connection.read(file_path_length).decode(STR_ENCODING)
         if verbose:

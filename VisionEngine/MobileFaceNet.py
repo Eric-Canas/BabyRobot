@@ -8,10 +8,18 @@ INVERSE_STD = 0.0078125
 
 class MobileFaceNet:
     def __init__(self):
+        """
+        Embedder including the MobileFaceNet.
+        """
         self.network = readNetFromCaffe(prototxt=FACE_EMBEDDING_DEFINITION,
                                         caffeModel=FACE_EMBEDDING_WEIGHTS)
 
     def predict(self, face):
+        """
+        Predicts the embedded representation of the face in the input image with the MobileFaceNet.
+        :param face: Numpy. Image containing the face to embed.
+        :return: Nunpy of Float. Embedded representation of the input face.
+        """
         face = resize(face, INPUT_SIZE)
 
         blob = blobFromImage(face, scalefactor=INVERSE_STD, mean=TRAINING_MEAN,

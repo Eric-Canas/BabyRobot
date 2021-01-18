@@ -20,8 +20,8 @@ import sys
 
 MODES = ("CAPTURE_NEW_DATASET", "TRAIN_RECOGNIZER", "SHOW_DETECTIONS_DEMO", "TRAIN_MOVEMENT", "PLAY", "SERVER")
 CONTROLLERS = ('DQN', 'FINITE_STATE_MACHINE')
-controller = 'DQN'
-execution_mode = "PLAY"
+controller = 'FINITE_STATE_MACHINE'
+execution_mode = "SERVER"
 movement_mode = SYNC_MODE
 execute_on_server = True
 teleoperated_exploration = False
@@ -61,13 +61,14 @@ elif execution_mode.upper() == "PLAY":
     person_to_follow = None#DEFAULT_PERSON_TO_FOLLOW
     showing = True
     pipeline = RecognitionPipeline() if not execute_on_server else ClientPipeline(socket=Socket(client=True, ip=ip))
-    controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, movement_mode=movement_mode))
     if controller == 'DQN':
+        controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, movement_mode=movement_mode))
         env = World(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,
                     average_info_from_n_images=1, movement_mode=movement_mode)
         validator = Validator(person_to_follow=person_to_follow)
         validator.validate(show=showing)
     else:
+        controller = Controller(MotorController(default_movement_time=MOVEMENT_TIME, movement_mode=movement_mode))
         state_machine = FiniteStateMachine(controller=controller)
         env = FiniteStateMachineWorld(objective_person=person_to_follow, controller=controller, recognition_pipeline=pipeline,
                     average_info_from_n_images=1, movement_mode=movement_mode, finite_state_machine=state_machine)
